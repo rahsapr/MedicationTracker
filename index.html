@@ -60,12 +60,6 @@
         }
         .animate-pop-in { animation: popIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; }
 
-        @keyframes pulse-soft {
-            0%, 100% { box-shadow: 0 0 0 0 rgba(249, 115, 22, 0.4); }
-            70% { box-shadow: 0 0 0 10px rgba(249, 115, 22, 0); }
-        }
-        .pulse-fire { animation: pulse-soft 2s infinite; }
-        
         .btn-press { transition: transform 0.1s cubic-bezier(0.4, 0, 0.2, 1); }
         .btn-press:active { transform: scale(0.96); }
 
@@ -81,8 +75,8 @@
         .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
         .calendar-day { aspect-ratio: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; border-radius: 12px; font-size: 0.9rem; cursor: pointer; transition: background-color 0.2s; }
         .calendar-day:active { background-color: #f1f5f9; }
-        .dot-container { display: flex; gap: 3px; margin-top: 3px; justify-content: center; flex-wrap: wrap; max-width: 100%; }
-        .dot { width: 5px; height: 5px; border-radius: 50%; }
+        .dot-container { display: flex; gap: 2px; margin-top: 2px; justify-content: center; flex-wrap: wrap; max-width: 100%; height: 6px; }
+        .dot { width: 4px; height: 4px; border-radius: 50%; }
 
         /* Toggle Checkbox Styling */
         .day-checkbox:checked + div { background-color: #4f46e5; color: white; border-color: #4f46e5; box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3); }
@@ -90,6 +84,9 @@
         /* Confetti Canvas */
         #confetti-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 100; }
         
+        /* Chart Tooltip */
+        #chart-tooltip { pointer-events: none; transform: translate(-50%, -100%); transition: opacity 0.2s; }
+
         /* Safe Area for Mobile */
         .pb-safe { padding-bottom: env(safe-area-inset-bottom, 20px); }
     </style>
@@ -124,15 +121,13 @@
         </div>
     </header>
 
-    <!-- Notification Panel (Floating Glass) -->
+    <!-- Notification Panel -->
     <div id="notification-panel" class="absolute top-20 right-5 w-72 glass-card rounded-2xl shadow-xl z-50 hidden animate-pop-in origin-top-right">
         <div class="p-4 border-b border-slate-100 flex justify-between items-center bg-white/50 rounded-t-2xl">
             <h3 class="font-bold text-sm text-slate-700">Due Today</h3>
             <button onclick="document.getElementById('notification-panel').classList.add('hidden')" class="text-slate-400 hover:text-slate-600"><i class="ph-bold ph-x"></i></button>
         </div>
-        <div id="notification-list" class="p-2 max-h-64 overflow-y-auto custom-scrollbar">
-            <!-- Items injected here -->
-        </div>
+        <div id="notification-list" class="p-2 max-h-64 overflow-y-auto custom-scrollbar"></div>
     </div>
 
     <!-- Main Content Area -->
@@ -143,17 +138,13 @@
             
             <!-- Gamification Streak Card -->
             <div class="bg-gradient-to-br from-indigo-600 via-purple-600 to-indigo-800 rounded-3xl p-5 shadow-lg shadow-indigo-500/30 text-white relative overflow-hidden ring-1 ring-white/20">
-                <!-- Decorative Circles -->
                 <div class="absolute -top-10 -right-10 w-40 h-40 bg-white/10 rounded-full blur-2xl"></div>
                 <div class="absolute bottom-0 left-0 w-32 h-32 bg-purple-500/20 rounded-full blur-xl"></div>
                 
                 <div class="relative z-10 flex justify-between items-center">
                     <div>
                         <div class="text-xs font-bold text-indigo-200 uppercase tracking-wider mb-1">Current Streak</div>
-                        <div class="flex items-baseline gap-1.5">
-                            <span class="text-5xl font-black tracking-tighter" id="streak-count">0</span>
-                            <span class="text-lg font-medium text-indigo-100">days</span>
-                        </div>
+                        <div class="flex items-baseline gap-1.5"><span class="text-5xl font-black tracking-tighter" id="streak-count">0</span><span class="text-lg font-medium text-indigo-100">days</span></div>
                     </div>
                     <div class="flex flex-col items-center justify-center w-16 h-16 bg-gradient-to-b from-white/20 to-white/5 rounded-2xl backdrop-blur-md shadow-inner border border-white/10" id="streak-icon-container">
                         <i class="ph-fill ph-fire text-3xl text-orange-400 drop-shadow-md" id="streak-fire-icon"></i>
@@ -165,7 +156,7 @@
                 </div>
             </div>
 
-            <!-- Dynamic Medication Cards -->
+            <!-- Medication Cards -->
             <div class="space-y-2">
                 <h2 class="text-sm font-bold text-slate-400 uppercase tracking-wider pl-1">Today's Plan</h2>
                 <div id="medication-cards-container" class="space-y-4"></div>
@@ -177,23 +168,60 @@
                     <h3 class="text-sm font-bold text-slate-400 uppercase tracking-wider">History</h3>
                     <span id="page-indicator" class="text-[10px] font-bold text-slate-500 bg-white border border-slate-200 shadow-sm px-2 py-1 rounded-full">Page 1</span>
                 </div>
-                
                 <div class="glass-card rounded-2xl shadow-sm overflow-hidden flex flex-col max-h-[300px]">
-                    <div id="history-list" class="overflow-y-auto custom-scrollbar p-1">
-                        <!-- Populated by JS -->
-                    </div>
+                    <div id="history-list" class="overflow-y-auto custom-scrollbar p-1"></div>
                 </div>
-
-                <!-- Pagination -->
                 <div class="flex justify-center items-center gap-4 mt-4">
-                    <button onclick="window.app.changeHistoryPage(-1)" id="btn-prev-page" class="text-xs font-bold text-slate-500 disabled:opacity-30 flex items-center gap-1 bg-white px-3 py-2 rounded-full shadow-sm border border-slate-100 btn-press disabled:cursor-not-allowed" disabled>
-                        <i class="ph-bold ph-caret-left"></i> Newer
-                    </button>
-                    <button onclick="window.app.changeHistoryPage(1)" id="btn-next-page" class="text-xs font-bold text-slate-500 disabled:opacity-30 flex items-center gap-1 bg-white px-3 py-2 rounded-full shadow-sm border border-slate-100 btn-press disabled:cursor-not-allowed" disabled>
-                        Older <i class="ph-bold ph-caret-right"></i>
-                    </button>
+                    <button onclick="window.app.changeHistoryPage(-1)" id="btn-prev-page" class="text-xs font-bold text-slate-500 disabled:opacity-30 flex items-center gap-1 bg-white px-3 py-2 rounded-full shadow-sm border border-slate-100 btn-press disabled:cursor-not-allowed" disabled>Newer</button>
+                    <button onclick="window.app.changeHistoryPage(1)" id="btn-next-page" class="text-xs font-bold text-slate-500 disabled:opacity-30 flex items-center gap-1 bg-white px-3 py-2 rounded-full shadow-sm border border-slate-100 btn-press disabled:cursor-not-allowed" disabled>Older</button>
                 </div>
             </div>
+        </div>
+
+        <!-- JOURNAL / HEALTH VIEW -->
+        <div id="view-journal" class="h-full overflow-y-auto no-scrollbar p-5 pb-32 hidden max-w-md mx-auto transition-opacity duration-200">
+            <div class="glass-card rounded-3xl p-5 mb-6 shadow-sm">
+                <div class="flex justify-between items-start mb-4">
+                    <div>
+                        <h2 class="text-lg font-bold text-slate-800 flex items-center gap-2"><i class="ph-fill ph-scales text-indigo-500"></i> Weight & Journal</h2>
+                        <p class="text-xs text-slate-400" id="weight-unit-label">kg</p>
+                    </div>
+                    <div id="bmi-badge" class="hidden px-2.5 py-1 rounded-lg text-xs font-bold bg-slate-100 text-slate-500">BMI: --</div>
+                </div>
+
+                <!-- Chart Controls -->
+                <div class="flex justify-end gap-1 mb-2">
+                    <button onclick="window.app.setChartRange('1m')" class="chart-range-btn text-[10px] font-bold px-2 py-1 rounded bg-slate-100 text-slate-500 hover:bg-indigo-100 hover:text-indigo-600 transition-colors" data-range="1m">1M</button>
+                    <button onclick="window.app.setChartRange('3m')" class="chart-range-btn text-[10px] font-bold px-2 py-1 rounded bg-slate-100 text-slate-500 hover:bg-indigo-100 hover:text-indigo-600 transition-colors" data-range="3m">3M</button>
+                    <button onclick="window.app.setChartRange('6m')" class="chart-range-btn text-[10px] font-bold px-2 py-1 rounded bg-slate-100 text-slate-500 hover:bg-indigo-100 hover:text-indigo-600 transition-colors" data-range="6m">6M</button>
+                    <button onclick="window.app.setChartRange('1y')" class="chart-range-btn text-[10px] font-bold px-2 py-1 rounded bg-slate-100 text-slate-500 hover:bg-indigo-100 hover:text-indigo-600 transition-colors" data-range="1y">1Y</button>
+                    <button onclick="window.app.setChartRange('all')" class="chart-range-btn text-[10px] font-bold px-2 py-1 rounded bg-indigo-100 text-indigo-600 transition-colors" data-range="all">All</button>
+                </div>
+
+                <!-- Chart -->
+                <div class="relative w-full h-48 bg-slate-50 rounded-xl mb-4 overflow-hidden border border-slate-100">
+                    <canvas id="weight-chart" class="w-full h-full"></canvas>
+                    <div id="chart-tooltip" class="absolute top-0 left-0 bg-slate-800 text-white text-[10px] px-2 py-1 rounded opacity-0 pointer-events-none transition-opacity z-10 whitespace-nowrap"></div>
+                </div>
+
+                <!-- Inputs -->
+                <div class="flex gap-2 mb-2">
+                     <input type="date" id="journal-date" class="w-1/3 p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-600 focus:outline-none" onchange="window.app.renderJournal()">
+                     <input type="number" id="weight-input" step="0.1" placeholder="0.0" class="flex-1 p-3 bg-slate-50 border border-slate-200 rounded-xl text-lg font-bold text-slate-700 focus:outline-none focus:border-indigo-500">
+                </div>
+                <textarea id="note-input" rows="2" placeholder="Add a note (appends to day's entry)" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-700 focus:outline-none focus:border-amber-400 resize-none mb-2"></textarea>
+                <button onclick="window.app.logJournalEntry()" class="w-full py-3 bg-indigo-600 text-white rounded-xl font-bold shadow-md shadow-indigo-200 hover:bg-indigo-700 btn-press text-sm flex items-center justify-center gap-2"><i class="ph-bold ph-floppy-disk"></i> Save Entry</button>
+                <div id="height-nudge" class="hidden mt-3 text-center"><button onclick="window.app.toggleSettings()" class="text-xs text-indigo-500 font-bold hover:underline">Add height in settings for BMI</button></div>
+            </div>
+
+            <div class="flex justify-between items-center mb-2 pl-1">
+                <h3 class="text-sm font-bold text-slate-400 uppercase tracking-wider">Recent Entries</h3>
+                <div class="flex gap-1">
+                    <button onclick="window.app.changeJournalPage(-1)" id="btn-j-prev" class="w-6 h-6 flex items-center justify-center rounded bg-white border border-slate-100 text-slate-400 hover:text-indigo-600 disabled:opacity-30" disabled><i class="ph-bold ph-caret-left"></i></button>
+                    <button onclick="window.app.changeJournalPage(1)" id="btn-j-next" class="w-6 h-6 flex items-center justify-center rounded bg-white border border-slate-100 text-slate-400 hover:text-indigo-600 disabled:opacity-30" disabled><i class="ph-bold ph-caret-right"></i></button>
+                </div>
+            </div>
+            <div id="journal-history-list" class="space-y-3"></div>
         </div>
 
         <!-- CALENDAR VIEW -->
@@ -204,7 +232,6 @@
                     <h2 id="calendar-month-title" class="font-extrabold text-xl text-slate-800 tracking-tight">Month Year</h2>
                     <button onclick="window.app.changeMonth(1)" class="p-2 hover:bg-slate-100 rounded-full text-slate-600 transition-colors"><i class="ph-bold ph-caret-right text-lg"></i></button>
                 </div>
-                
                 <div class="calendar-grid mb-3">
                     <div class="text-center text-[10px] font-bold text-slate-400 uppercase py-1">Sun</div>
                     <div class="text-center text-[10px] font-bold text-slate-400 uppercase py-1">Mon</div>
@@ -214,38 +241,27 @@
                     <div class="text-center text-[10px] font-bold text-slate-400 uppercase py-1">Fri</div>
                     <div class="text-center text-[10px] font-bold text-slate-400 uppercase py-1">Sat</div>
                 </div>
-                <div id="calendar-days" class="calendar-grid">
-                    <!-- Days generated by JS -->
-                </div>
-                
-                <!-- Legend -->
+                <div id="calendar-days" class="calendar-grid"></div>
                 <div class="flex flex-wrap gap-3 justify-center mt-6 pt-4 border-t border-slate-100/50">
                     <div class="flex items-center gap-1.5"><div class="w-3 h-3 rounded-full bg-emerald-100 border border-emerald-200"></div><span class="text-[10px] font-bold text-slate-400">100%</span></div>
                     <div class="flex items-center gap-1.5"><div class="w-3 h-3 rounded-full bg-amber-100 border border-amber-200"></div><span class="text-[10px] font-bold text-slate-400">Partial</span></div>
-                    <div class="flex items-center gap-1.5"><div class="w-3 h-3 rounded-full bg-red-50 border border-red-200"></div><span class="text-[10px] font-bold text-slate-400">Missed</span></div>
+                    <div class="flex items-center gap-1.5"><div class="w-3 h-3 rounded-full bg-purple-100 border border-purple-200"></div><span class="text-[10px] font-bold text-slate-400">Weight</span></div>
                 </div>
             </div>
-            
             <p class="text-center text-xs font-medium text-slate-400 mb-6 bg-white/40 inline-block px-4 py-2 rounded-full mx-auto">Tap a date to view details</p>
         </div>
-
     </main>
 
-    <!-- Floating Bottom Navigation -->
+    <!-- Floating Navigation -->
     <div class="fixed bottom-6 left-0 right-0 z-30 flex justify-center pointer-events-none">
         <nav class="glass-card shadow-2xl shadow-indigo-500/10 rounded-full px-2 py-1.5 flex gap-1 pointer-events-auto scale-100 transform transition-transform">
-            <button onclick="window.app.switchView('dashboard')" id="nav-dashboard" class="flex items-center gap-2 px-5 py-3 rounded-full bg-indigo-600 text-white shadow-md transition-all duration-300">
-                <i class="ph-fill ph-house text-xl"></i>
-                <span class="text-xs font-bold">Today</span>
-            </button>
-            <button onclick="window.app.switchView('calendar')" id="nav-calendar" class="flex items-center gap-2 px-5 py-3 rounded-full text-slate-500 hover:bg-slate-50 transition-all duration-300">
-                <i class="ph-bold ph-calendar-blank text-xl"></i>
-                <span class="text-xs font-bold hidden w-0 overflow-hidden opacity-0 transition-all">History</span>
-            </button>
+            <button onclick="window.app.switchView('dashboard')" id="nav-dashboard" class="flex items-center gap-2 px-5 py-3 rounded-full bg-indigo-600 text-white shadow-md transition-all duration-300"><i class="ph-fill ph-house text-xl"></i></button>
+            <button onclick="window.app.switchView('journal')" id="nav-journal" class="flex items-center gap-2 px-5 py-3 rounded-full text-slate-500 hover:bg-slate-50 transition-all duration-300"><i class="ph-bold ph-notebook text-xl"></i></button>
+            <button onclick="window.app.switchView('calendar')" id="nav-calendar" class="flex items-center gap-2 px-5 py-3 rounded-full text-slate-500 hover:bg-slate-50 transition-all duration-300"><i class="ph-bold ph-calendar-blank text-xl"></i></button>
         </nav>
     </div>
 
-    <!-- Confirmation Modal (Custom) -->
+    <!-- Modals -->
     <div id="confirm-modal" class="fixed inset-0 bg-slate-900/60 z-[90] hidden flex justify-center items-center p-6 backdrop-blur-sm">
         <div class="bg-white w-full max-w-xs rounded-3xl p-6 shadow-2xl animate-pop-in text-center ring-1 ring-white/20">
             <h3 class="font-extrabold text-lg text-slate-800 mb-2">Are you sure?</h3>
@@ -257,115 +273,52 @@
         </div>
     </div>
 
-    <!-- Settings Modal (Fixed for Mobile Scrolling) -->
     <div id="settings-modal" onclick="if(event.target === this) window.app.toggleSettings()" class="fixed inset-0 bg-slate-900/40 z-50 hidden backdrop-blur-sm flex justify-center items-center p-4">
         <div class="bg-white w-full max-w-md rounded-3xl shadow-2xl animate-slide-up max-h-[90vh] flex flex-col ring-1 ring-black/5 overflow-hidden">
-            
-            <!-- Sticky Header -->
             <div class="flex justify-between items-center p-6 border-b border-slate-100 bg-white z-10 shrink-0">
                 <h2 class="text-2xl font-extrabold text-slate-800 tracking-tight">Settings</h2>
-                <button onclick="window.app.toggleSettings()" class="p-2 bg-slate-100 rounded-full text-slate-600 hover:bg-slate-200 transition-colors">
-                    <i class="ph-bold ph-x text-lg"></i>
-                </button>
+                <button onclick="window.app.toggleSettings()" class="p-2 bg-slate-100 rounded-full text-slate-600 hover:bg-slate-200 transition-colors"><i class="ph-bold ph-x text-lg"></i></button>
             </div>
-
-            <!-- Scrollable Content -->
             <div class="overflow-y-auto p-6 space-y-8 pb-10">
-                
-                <!-- Notifications & Sync -->
+                <!-- Profile -->
                 <section>
-                    <h3 class="font-bold text-lg text-slate-800 mb-3">Reminders</h3>
-                    <div class="grid grid-cols-1 gap-3">
-                        <button onclick="window.app.requestBrowserNotifications()" class="flex items-center justify-between p-3.5 bg-slate-50 hover:bg-slate-100 rounded-xl transition-colors btn-press">
-                            <span class="text-sm font-bold text-slate-600 flex items-center gap-2"><i class="ph-bold ph-browser text-indigo-500"></i> Browser Popups (App Open)</span>
-                            <i class="ph-bold ph-toggle-left text-2xl text-slate-300" id="browser-notif-icon"></i>
-                        </button>
-                        
-                        <button onclick="window.app.generateCalendar()" class="flex items-center justify-center gap-2 p-3.5 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 border border-indigo-100 rounded-xl text-sm font-bold btn-press transition-colors">
-                            <i class="ph-bold ph-calendar-plus"></i> Add to Phone Calendar
-                        </button>
-                        <p class="text-[10px] text-slate-400 px-1">"Add to Phone Calendar" creates a <b>recurring series</b> for your meds. This lets you manage or delete the entire schedule easily from your calendar app.</p>
+                    <h3 class="font-bold text-lg text-slate-800 mb-3">Profile</h3>
+                    <div class="space-y-3">
+                        <div><label class="text-xs font-bold text-slate-400 uppercase ml-1">Name</label><input type="text" id="settings-name" onchange="window.app.saveProfile()" placeholder="Your Name" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl mt-1 text-sm font-bold text-slate-700"></div>
+                        <div class="flex gap-3">
+                            <div class="flex-1"><label class="text-xs font-bold text-slate-400 uppercase ml-1">Height (cm)</label><input type="number" id="settings-height" onchange="window.app.saveProfile()" placeholder="175" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl mt-1 text-sm font-bold text-slate-700"></div>
+                            <div class="flex-1"><label class="text-xs font-bold text-slate-400 uppercase ml-1">Weight Unit</label><select id="settings-unit" onchange="window.app.saveProfile()" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl mt-1 text-sm font-bold text-slate-700"><option value="kg">Metric (kg)</option><option value="lbs">Imperial (lbs)</option></select></div>
+                        </div>
                     </div>
                 </section>
-
-                <!-- Adherence Stats -->
+                <!-- Adherence -->
                 <section class="bg-indigo-50 p-5 rounded-2xl border border-indigo-100 relative overflow-hidden">
                     <div class="absolute right-0 top-0 w-24 h-24 bg-indigo-200/50 rounded-full blur-2xl -translate-y-8 translate-x-8"></div>
                     <h3 class="font-bold text-indigo-900 mb-2 flex items-center gap-2 relative z-10"><i class="ph-fill ph-chart-bar"></i> Monthly Consistency</h3>
-                    <div class="flex items-end gap-2 relative z-10">
-                        <span class="text-4xl font-black text-indigo-600 tracking-tight" id="adherence-rate">0%</span>
-                        <span class="text-xs font-medium text-indigo-400 mb-1.5">completion rate</span>
-                    </div>
+                    <div class="flex items-end gap-2 relative z-10"><span class="text-4xl font-black text-indigo-600 tracking-tight" id="adherence-rate">0%</span><span class="text-xs font-medium text-indigo-400 mb-1.5">completion rate</span></div>
                 </section>
-
-                <!-- Manage Medications -->
-                <section>
-                    <div class="flex justify-between items-end mb-3">
-                        <h3 class="font-bold text-lg text-slate-800">My Medications</h3>
-                        <button onclick="window.app.openAddMedModal()" class="text-xs font-bold text-white bg-indigo-600 px-3 py-1.5 rounded-full hover:bg-indigo-700 shadow-md shadow-indigo-200 transition-all btn-press flex items-center gap-1">
-                            <i class="ph-bold ph-plus"></i> Add New
-                        </button>
-                    </div>
-                    <div id="settings-med-list" class="space-y-3">
-                        <!-- Populated by JS -->
-                    </div>
-                </section>
-
-                <!-- Data Management -->
-                <section class="border-t border-slate-100 pt-6">
-                    <h3 class="font-bold text-lg text-slate-800 mb-3">Data</h3>
-                    <div class="grid grid-cols-1 gap-3">
-                         <!-- Export Options -->
-                         <div class="grid grid-cols-2 gap-3">
-                            <button onclick="window.app.exportCSV()" class="flex items-center justify-center gap-2 p-3.5 bg-green-50 text-green-700 hover:bg-green-100 border border-green-100 rounded-xl text-sm font-bold btn-press transition-colors">
-                                <i class="ph-bold ph-file-csv"></i> Export CSV
-                            </button>
-                            <button onclick="window.app.exportJSON()" class="flex items-center justify-center gap-2 p-3.5 bg-slate-50 hover:bg-slate-100 border border-slate-100 rounded-xl text-sm font-bold text-slate-600 btn-press transition-colors">
-                                <i class="ph-bold ph-download-simple"></i> Backup
-                            </button>
-                        </div>
-
-                        <!-- Import -->
-                        <label class="flex items-center justify-center gap-2 p-3.5 bg-slate-50 rounded-xl text-sm font-bold text-slate-600 btn-press cursor-pointer hover:bg-slate-100 border border-slate-100 transition-colors">
-                            <i class="ph-bold ph-upload-simple"></i> Restore Backup
-                            <input type="file" id="import-file" class="hidden" accept=".json" onchange="window.app.importData(this)">
-                        </label>
-                    </div>
-                </section>
-
-                <!-- Danger Zone -->
-                <section class="pt-6 border-t border-slate-100">
-                    <button onclick="window.app.generateMockData()" class="w-full mb-3 p-3.5 text-blue-600 bg-blue-50 hover:bg-blue-100 border border-blue-100 rounded-xl text-sm font-bold transition-colors btn-press">
-                        <i class="ph-bold ph-flask"></i> Generate 100 Days Data
-                    </button>
-                    <button onclick="window.app.clearAllData()" class="w-full p-3.5 text-red-600 bg-red-50 hover:bg-red-100 border border-red-100 rounded-xl text-sm font-bold transition-colors btn-press">
-                        Reset App Data
-                    </button>
-                    <p class="text-center text-[10px] font-bold text-slate-300 mt-4 uppercase tracking-widest">v5.10.0 • Crash Fix</p>
-                </section>
+                <!-- Meds -->
+                <section><div class="flex justify-between items-end mb-3"><h3 class="font-bold text-lg text-slate-800">My Medications</h3><button onclick="window.app.openAddMedModal()" class="text-xs font-bold text-white bg-indigo-600 px-3 py-1.5 rounded-full hover:bg-indigo-700 shadow-md shadow-indigo-200 transition-all btn-press flex items-center gap-1"><i class="ph-bold ph-plus"></i> Add New</button></div><div id="settings-med-list" class="space-y-3"></div></section>
+                <!-- Data -->
+                <section class="border-t border-slate-100 pt-6"><h3 class="font-bold text-lg text-slate-800 mb-3">Data</h3><div class="grid grid-cols-1 gap-3"><div class="grid grid-cols-2 gap-3"><button onclick="window.app.exportCSV()" class="flex items-center justify-center gap-2 p-3.5 bg-green-50 text-green-700 hover:bg-green-100 border border-green-100 rounded-xl text-sm font-bold btn-press transition-colors"><i class="ph-bold ph-file-csv"></i> Export CSV</button><button onclick="window.app.exportJSON()" class="flex items-center justify-center gap-2 p-3.5 bg-slate-50 hover:bg-slate-100 border border-slate-100 rounded-xl text-sm font-bold text-slate-600 btn-press transition-colors"><i class="ph-bold ph-download-simple"></i> Backup</button></div><label class="flex items-center justify-center gap-2 p-3.5 bg-slate-50 rounded-xl text-sm font-bold text-slate-600 btn-press cursor-pointer hover:bg-slate-100 border border-slate-100 transition-colors"><i class="ph-bold ph-upload-simple"></i> Restore Backup<input type="file" id="import-file" class="hidden" accept=".json" onchange="window.app.importData(this)"></label></div></section>
+                <!-- Danger -->
+                <section class="pt-6 border-t border-slate-100"><button onclick="window.app.generateMockData()" class="w-full mb-3 p-3.5 text-blue-600 bg-blue-50 hover:bg-blue-100 border border-blue-100 rounded-xl text-sm font-bold transition-colors btn-press"><i class="ph-bold ph-flask"></i> Generate 100 Days Data</button><button onclick="window.app.clearAllData()" class="w-full p-3.5 text-red-600 bg-red-50 hover:bg-red-100 border border-red-100 rounded-xl text-sm font-bold transition-colors btn-press">Reset App Data</button><p class="text-center text-[10px] font-bold text-slate-300 mt-4 uppercase tracking-widest">v6.3.6 • Full Restore</p></section>
             </div>
         </div>
     </div>
 
-    <!-- Add/Edit Med Modal -->
     <div id="add-med-modal" class="fixed inset-0 bg-slate-900/60 z-[60] hidden flex justify-center items-center p-6 backdrop-blur-sm">
         <div class="bg-white w-full max-w-sm rounded-3xl p-6 shadow-2xl animate-slide-up max-h-[90vh] overflow-y-auto ring-1 ring-white/20">
             <h3 class="font-extrabold text-xl text-slate-800 mb-6">Add Medication</h3>
-            
             <div class="space-y-5">
                 <div>
                     <label class="text-xs font-bold text-slate-400 uppercase tracking-wide ml-1">Name</label>
-                    <input type="text" id="new-med-name" placeholder="e.g. Vitamin D" class="w-full p-3 border border-slate-200 rounded-xl mt-1.5 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 transition-all font-medium text-slate-700">
+                    <input type="text" id="new-med-name" placeholder="e.g. Vitamin D" class="w-full p-3 border border-slate-200 rounded-xl mt-1.5 focus:outline-none focus:border-indigo-500 font-medium text-slate-700">
                 </div>
-                
                 <div>
                     <label class="text-xs font-bold text-slate-400 uppercase tracking-wide ml-1">Color Tag</label>
-                    <div class="flex gap-3 mt-1.5 overflow-x-auto pb-2 no-scrollbar" id="color-picker">
-                        <!-- Colors generated by JS -->
-                    </div>
+                    <div class="flex gap-3 mt-1.5 overflow-x-auto pb-2 no-scrollbar" id="color-picker"></div>
                 </div>
-
-                <!-- Frequency Selection -->
                 <div>
                     <label class="text-xs font-bold text-slate-400 uppercase tracking-wide ml-1">Frequency</label>
                     <div class="relative">
@@ -378,102 +331,54 @@
                         <i class="ph-bold ph-caret-down absolute right-3 top-5 text-slate-400 pointer-events-none"></i>
                     </div>
                 </div>
-
-                <!-- Dynamic Inputs -->
                 <div id="schedule-inputs" class="bg-slate-50 p-4 rounded-2xl border border-slate-100">
-                    
                     <div id="input-alternate" class="hidden">
                         <label class="text-xs font-bold text-slate-500 block mb-1.5">Start Date</label>
                         <input type="date" id="new-med-start-date" class="w-full p-2.5 border border-slate-200 rounded-lg bg-white text-sm font-medium">
-                        <p class="text-[10px] text-slate-400 mt-2 leading-relaxed">Schedule calculates ON/OFF days starting from this date.</p>
                     </div>
-
                     <div id="input-weekly" class="hidden">
                         <label class="text-xs font-bold text-slate-500 block mb-3">Repeats On</label>
-                        <div class="flex justify-between gap-1">
-                            <label class="cursor-pointer group"><input type="checkbox" class="hidden day-checkbox" value="1"><div class="w-9 h-9 rounded-full border border-slate-200 bg-white flex items-center justify-center text-xs font-bold text-slate-400 transition-all group-hover:border-indigo-200">M</div></label>
-                            <label class="cursor-pointer group"><input type="checkbox" class="hidden day-checkbox" value="2"><div class="w-9 h-9 rounded-full border border-slate-200 bg-white flex items-center justify-center text-xs font-bold text-slate-400 transition-all group-hover:border-indigo-200">T</div></label>
-                            <label class="cursor-pointer group"><input type="checkbox" class="hidden day-checkbox" value="3"><div class="w-9 h-9 rounded-full border border-slate-200 bg-white flex items-center justify-center text-xs font-bold text-slate-400 transition-all group-hover:border-indigo-200">W</div></label>
-                            <label class="cursor-pointer group"><input type="checkbox" class="hidden day-checkbox" value="4"><div class="w-9 h-9 rounded-full border border-slate-200 bg-white flex items-center justify-center text-xs font-bold text-slate-400 transition-all group-hover:border-indigo-200">T</div></label>
-                            <label class="cursor-pointer group"><input type="checkbox" class="hidden day-checkbox" value="5"><div class="w-9 h-9 rounded-full border border-slate-200 bg-white flex items-center justify-center text-xs font-bold text-slate-400 transition-all group-hover:border-indigo-200">F</div></label>
-                            <label class="cursor-pointer group"><input type="checkbox" class="hidden day-checkbox" value="6"><div class="w-9 h-9 rounded-full border border-slate-200 bg-white flex items-center justify-center text-xs font-bold text-slate-400 transition-all group-hover:border-indigo-200">S</div></label>
-                            <label class="cursor-pointer group"><input type="checkbox" class="hidden day-checkbox" value="0"><div class="w-9 h-9 rounded-full border border-slate-200 bg-white flex items-center justify-center text-xs font-bold text-slate-400 transition-all group-hover:border-indigo-200">S</div></label>
-                        </div>
+                        <div class="flex justify-between gap-1" id="week-checkboxes"></div>
                     </div>
-
                     <div id="input-monthly" class="hidden">
                          <label class="text-xs font-bold text-slate-500 block mb-1.5">Day of Month</label>
                          <input type="number" id="new-med-month-day" min="1" max="31" placeholder="1" class="w-full p-2.5 border border-slate-200 rounded-lg bg-white text-sm font-medium">
                     </div>
-
-                    <div id="input-daily" class="text-xs font-medium text-slate-400 text-center py-2">
-                        Reminder every day.
-                    </div>
+                    <div id="input-daily" class="text-xs font-medium text-slate-400 text-center py-2">Reminder every day.</div>
                 </div>
-
             </div>
-
             <div class="flex gap-3 mt-8">
                 <button onclick="document.getElementById('add-med-modal').classList.add('hidden')" class="flex-1 py-3.5 text-slate-500 font-bold text-sm bg-slate-50 rounded-xl hover:bg-slate-100 transition-colors">Cancel</button>
-                <button onclick="window.app.saveNewMedication()" class="flex-1 py-3.5 bg-indigo-600 text-white rounded-xl font-bold text-sm shadow-lg shadow-indigo-200 hover:bg-indigo-700 transition-all btn-press">Save Medication</button>
+                <button onclick="window.app.saveNewMedication()" class="flex-1 py-3.5 bg-indigo-600 text-white rounded-xl font-bold text-sm shadow-lg shadow-indigo-200 hover:bg-indigo-700 transition-all btn-press">Save</button>
             </div>
         </div>
     </div>
 
-    <!-- Day Details Popup -->
     <div id="day-details-modal" class="fixed inset-0 bg-slate-900/60 z-[60] hidden flex justify-center items-center p-6 backdrop-blur-sm">
         <div class="bg-white w-full max-w-sm rounded-3xl p-0 shadow-2xl animate-slide-up overflow-hidden ring-1 ring-white/20">
             <div class="bg-indigo-50/50 p-5 border-b border-indigo-50 flex justify-between items-center">
                 <h3 class="font-extrabold text-lg text-indigo-900" id="detail-date-title">Date</h3>
                 <button onclick="document.getElementById('day-details-modal').classList.add('hidden')" class="w-8 h-8 flex items-center justify-center rounded-full bg-white text-slate-400 hover:text-slate-600 hover:bg-slate-50 transition-colors shadow-sm"><i class="ph-bold ph-x"></i></button>
             </div>
-            <div class="p-6 space-y-6">
-                
-                <!-- Taken Section -->
-                <div>
-                    <h4 class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3">Completed</h4>
-                    <div id="detail-taken-list" class="space-y-2"></div>
-                </div>
-
-                <!-- Missed Section -->
-                <div>
-                    <h4 class="text-[10px] font-bold text-red-400 uppercase tracking-widest mb-3">Missed</h4>
-                    <div id="detail-missed-list" class="space-y-2"></div>
-                </div>
+            <div class="p-6 space-y-6 max-h-[60vh] overflow-y-auto">
+                <div id="section-taken"><h4 class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3">Completed</h4><div id="detail-taken-list" class="space-y-2"></div></div>
+                <div><h4 id="detail-missed-title" class="text-[10px] font-bold text-red-400 uppercase tracking-widest mb-3">Missed</h4><div id="detail-missed-list" class="space-y-2"></div></div>
+                <div id="detail-journal-section" class="border-t border-slate-100 pt-4 mt-2 hidden"><h4 class="text-[10px] font-bold text-indigo-400 uppercase tracking-widest mb-2">Health Journal</h4><div id="detail-journal-content" class="text-sm text-slate-600 bg-slate-50 p-3 rounded-xl"></div></div>
             </div>
         </div>
     </div>
-
-    <!-- Celebration Overlay -->
-    <div id="celebration-overlay" class="fixed inset-0 pointer-events-none z-[80] flex items-center justify-center hidden">
-        <div class="bg-white/80 backdrop-blur-xl px-8 py-5 rounded-full shadow-2xl animate-pop-in border border-white/50 ring-4 ring-indigo-500/10">
-            <h2 class="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600">
-                All Done! 🎉
-            </h2>
-        </div>
-    </div>
-
-    <!-- Toast -->
-    <div id="toast" class="fixed bottom-24 left-1/2 -translate-x-1/2 bg-slate-800/90 backdrop-blur-md text-white px-6 py-3 rounded-full shadow-xl transform transition-all duration-300 translate-y-20 opacity-0 z-[70] text-sm font-semibold flex items-center gap-2 pointer-events-none">
-        <i class="ph-fill ph-check-circle text-green-400 text-lg"></i>
-        <span id="toast-msg">Action saved</span>
-    </div>
+    
+    <div id="celebration-overlay" class="fixed inset-0 pointer-events-none z-[80] flex items-center justify-center hidden"><div class="bg-white/80 backdrop-blur-xl px-8 py-5 rounded-full shadow-2xl animate-pop-in border border-white/50 ring-4 ring-indigo-500/10"><h2 class="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600">All Done! 🎉</h2></div></div>
+    <div id="toast" class="fixed bottom-24 left-1/2 -translate-x-1/2 bg-slate-800/90 backdrop-blur-md text-white px-6 py-3 rounded-full shadow-xl transform transition-all duration-300 translate-y-20 opacity-0 z-[70] text-sm font-semibold flex items-center gap-2 pointer-events-none"><i class="ph-fill ph-check-circle text-green-400 text-lg"></i><span id="toast-msg">Action saved</span></div>
 
     <script>
-        /**
-         * Medication Tracker Application Logic v5.10.0
-         * Feature: Infinite Loop Bug Fix in calculateStats & Data robustness
-         */
         class MedTracker {
             constructor() {
                 this.today = this.getLocalDateString();
-                const y = new Date(); y.setDate(y.getDate() - 1);
-                const offset = y.getTimezoneOffset() * 60000;
-                const yesterday = new Date(y.getTime() - offset).toISOString().split('T')[0];
-
-                // Default State (Fallback)
+                const y = new Date(); y.setDate(y.getDate()-1);
+                const yesterday = new Date(y.getTime() - y.getTimezoneOffset()*60000).toISOString().split('T')[0];
                 this.state = {
-                    version: 5, logs: {}, bestStreak: 0,
+                    version: 6, logs: {}, bestStreak: 0, weightLogs: {}, noteLogs: {}, userProfile: { name: "", height: "", unit: "kg" },
                     medications: [
                         { id: 'med_blood', name: 'Blood Tablet', color: 'red', schedule: 'daily', scheduleDetails: {} },
                         { id: 'med_100', name: '100mg', color: 'blue', schedule: 'alternate', scheduleDetails: { startDate: this.today } },
@@ -481,109 +386,46 @@
                         { id: 'med_vitd', name: 'Vit D', color: 'amber', schedule: 'weekly', scheduleDetails: { days: [0] } }
                     ]
                 };
-                
                 this.currentCalendarDate = new Date();
                 this.historyPage = 0; this.ITEMS_PER_PAGE = 30;
-                this.confettiCanvas = document.getElementById('confetti-canvas');
-                this.ctx = this.confettiCanvas.getContext('2d');
-                this.colors = [
-                    { name: 'blue', bg: 'bg-blue-500', text: 'text-blue-600', ring: 'ring-blue-500' },
-                    { name: 'teal', bg: 'bg-teal-500', text: 'text-teal-600', ring: 'ring-teal-500' },
-                    { name: 'red', bg: 'bg-red-500', text: 'text-red-600', ring: 'ring-red-500' },
-                    { name: 'amber', bg: 'bg-amber-500', text: 'text-amber-600', ring: 'ring-amber-500' },
-                    { name: 'purple', bg: 'bg-purple-500', text: 'text-purple-600', ring: 'ring-purple-500' },
-                    { name: 'emerald', bg: 'bg-emerald-500', text: 'text-emerald-600', ring: 'ring-emerald-500' },
-                    { name: 'indigo', bg: 'bg-indigo-500', text: 'text-indigo-600', ring: 'ring-indigo-500' },
-                    { name: 'rose', bg: 'bg-rose-500', text: 'text-rose-600', ring: 'ring-rose-500' }
-                ];
-                this.selectedColor = 'blue';
-                this.pendingAction = null; 
-                this.init();
+                this.journalPage = 0; this.chartRange = 'all';
+                this.confettiCanvas = document.getElementById('confetti-canvas'); this.ctx = this.confettiCanvas.getContext('2d');
+                this.colors = [ { name: 'blue', bg: 'bg-blue-500', text: 'text-blue-600', ring: 'ring-blue-500' }, { name: 'teal', bg: 'bg-teal-500', text: 'text-teal-600', ring: 'ring-teal-500' }, { name: 'red', bg: 'bg-red-500', text: 'text-red-600', ring: 'ring-red-500' }, { name: 'amber', bg: 'bg-amber-500', text: 'text-amber-600', ring: 'ring-amber-500' }, { name: 'purple', bg: 'bg-purple-500', text: 'text-purple-600', ring: 'ring-purple-500' }, { name: 'emerald', bg: 'bg-emerald-500', text: 'text-emerald-600', ring: 'ring-emerald-500' }, { name: 'indigo', bg: 'bg-indigo-500', text: 'text-indigo-600', ring: 'ring-indigo-500' }, { name: 'rose', bg: 'bg-rose-500', text: 'text-rose-600', ring: 'ring-rose-500' } ];
+                this.selectedColor = 'blue'; this.pendingAction = null; 
             }
 
             init() {
                 try {
                     this.loadData();
-                    // Additional safety check: Ensure medications is an array
-                    if (!Array.isArray(this.state.medications)) {
-                        console.warn("Medications state corrupted, resetting to empty array.");
-                        this.state.medications = [];
-                    }
-                    this.renderColorPicker();
-                    this.resizeCanvas();
+                    if (!Array.isArray(this.state.medications)) this.state.medications = [];
+                    this.renderColorPicker(); this.initWeekCheckboxes(); this.resizeCanvas();
                     window.addEventListener('resize', () => this.resizeCanvas());
-                    this.renderUI();
-                    this.setupInputs();
+                    this.renderUI(); this.setupInputs();
                     const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
                     document.getElementById('current-date-display').textContent = new Date().toLocaleDateString('en-US', options);
                     document.getElementById('confirm-yes-btn').onclick = () => this.confirmAction();
                     this.checkBrowserPermission();
-                } catch (e) {
-                    console.error("Critical initialization error:", e);
-                    // Emergency Reset if app crashes on load
-                    if (confirm("The app encountered an error loading your data. Reset to default settings to fix this?")) {
-                        localStorage.removeItem('medTrackerData');
-                        location.reload();
-                    }
-                }
+                } catch (e) { console.error(e); if (confirm("Error loading data. Reset?")) { localStorage.removeItem('medTrackerData'); location.reload(); } }
             }
-
-            setupInputs() { document.getElementById('new-med-start-date').value = this.today; }
-            getLocalDateString() { const d = new Date(); const offset = d.getTimezoneOffset() * 60000; return new Date(d.getTime() - offset).toISOString().split('T')[0]; }
-
+            setupInputs() { document.getElementById('new-med-start-date').value = this.today; const journalDateInput = document.getElementById('journal-date'); if(journalDateInput) journalDateInput.value = this.today; }
+            getLocalDateString() { const d = new Date(); return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().split('T')[0]; }
             loadData() {
                 const saved = localStorage.getItem('medTrackerData');
-                if (saved) { 
-                    try { 
-                        const parsed = JSON.parse(saved); 
-                        if(!parsed.version || parsed.version < 4) {
-                            this.migrateToV4(parsed); 
-                        } else { 
-                            // Merge logic with type safety checks
-                            this.state = { ...this.state, ...parsed }; 
-                            // Ensure arrays are arrays (fixes the crash if medications was saved as null/undefined)
-                            if (!Array.isArray(this.state.medications)) this.state.medications = [];
-                            if (!this.state.logs) this.state.logs = {};
-                        } 
-                    } catch (e) { 
-                        console.error("Data load error", e); 
-                    } 
-                }
-            }
-            migrateToV4(oldData) {
-                let meds = oldData.medications || [];
-                // Ensure meds is an array even during migration
-                if (!Array.isArray(meds)) meds = [];
-                meds = meds.map(m => { if (!m.scheduleDetails) { let details = {}; if (m.schedule === 'alternate') details.startDate = this.today; return { ...m, scheduleDetails: details }; } return m; });
-                this.state = { version: 4, logs: oldData.logs || {}, bestStreak: oldData.bestStreak || 0, medications: meds };
-                this.saveData();
+                if (saved) { try { const parsed = JSON.parse(saved); if(!parsed.version || parsed.version < 6) this.state = { ...this.state, ...parsed, version: 6, weightLogs: parsed.weightLogs || {}, noteLogs: parsed.noteLogs || {}, userProfile: parsed.userProfile || { name:"", height:"", unit:"kg" } }; else this.state = { ...this.state, ...parsed }; } catch (e) { console.error(e); } }
+                document.getElementById('settings-name').value = this.state.userProfile.name || ""; document.getElementById('settings-height').value = this.state.userProfile.height || ""; document.getElementById('settings-unit').value = this.state.userProfile.unit || "kg";
             }
             saveData() { localStorage.setItem('medTrackerData', JSON.stringify(this.state)); this.renderUI(); }
+            saveProfile() { this.state.userProfile.name = document.getElementById('settings-name').value; this.state.userProfile.height = document.getElementById('settings-height').value; this.state.userProfile.unit = document.getElementById('settings-unit').value; this.saveData(); }
 
-            // --- Logic ---
             isDue(med, dateStr) {
-                if (med.deleted) return false; // Archived meds never due
+                if (med.deleted) return false;
                 if (med.schedule === 'daily') return true;
                 const checkDate = new Date(dateStr + 'T00:00:00');
-                if (med.schedule === 'weekly') {
-                    const days = med.scheduleDetails.days || [];
-                    const dayOfWeek = checkDate.getDay();
-                    return days.includes(dayOfWeek.toString()) || days.includes(dayOfWeek);
-                }
-                if (med.schedule === 'monthly') {
-                    const targetDay = parseInt(med.scheduleDetails.dayOfMonth);
-                    return checkDate.getDate() === targetDay;
-                }
-                if (med.schedule === 'alternate') {
-                    if (!med.scheduleDetails.startDate) return true;
-                    const start = new Date(med.scheduleDetails.startDate + 'T00:00:00');
-                    const diffTime = checkDate - start;
-                    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-                    return diffDays >= 0 && diffDays % 2 === 0;
-                }
+                if (med.schedule === 'weekly') { const days = med.scheduleDetails.days || []; const dayOfWeek = checkDate.getDay(); return days.includes(dayOfWeek); }
+                if (med.schedule === 'monthly') { const targetDay = parseInt(med.scheduleDetails.dayOfMonth); return checkDate.getDate() === targetDay; }
+                if (med.schedule === 'alternate') { if (!med.scheduleDetails.startDate) return true; const start = new Date(med.scheduleDetails.startDate + 'T00:00:00'); const diffTime = checkDate - start; const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24)); return diffDays >= 0 && diffDays % 2 === 0; }
                 return false;
             }
-
             checkStatus(med) {
                 const isTaken = this.state.logs[this.today] && this.state.logs[this.today][med.id];
                 const dueToday = this.isDue(med, this.today);
@@ -594,47 +436,23 @@
             }
 
             calculateStats() {
-                // FIXED: Handle case where ALL meds are deleted/archived
                 const activeMeds = (this.state.medications || []).filter(m => !m.deleted);
-                if (activeMeds.length === 0) {
-                    return { streak: 0, bestStreak: this.state.bestStreak, adherence: 0 };
-                }
-
-                let streak = 0;
-                let checkDate = new Date();
+                if (activeMeds.length === 0) return { streak: 0, bestStreak: this.state.bestStreak, adherence: 0 };
+                let streak = 0; let checkDate = new Date();
                 const todayStatus = this.getDayCompletionStatus(this.today);
-                if (!todayStatus.complete && todayStatus.required > 0) checkDate.setDate(checkDate.getDate() - 1);
-
-                // FIXED: Safety limit for loop to prevent browser freeze
+                if (!todayStatus.complete) checkDate.setDate(checkDate.getDate() - 1);
                 let safetyLimit = 1000; 
                 while (safetyLimit-- > 0) {
                     const dateStr = checkDate.toISOString().split('T')[0];
                     const status = this.getDayCompletionStatus(dateStr);
-                    if (status.required === 0) {
-                        // Skip days count as bridge? Or break?
-                        // Usually empty days bridge streak. We continue.
-                    } 
-                    else if (status.complete) streak++;
-                    else break;
-                    
+                    if (status.required === 0) {} else if (status.complete) streak++; else break;
                     checkDate.setDate(checkDate.getDate() - 1);
                 }
                 if (streak > (this.state.bestStreak || 0)) this.state.bestStreak = streak;
-
-                // Monthly Adherence
-                const now = new Date();
-                const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-                let daysChecked = 0;
-                let daysPerfect = 0;
-                let scanDate = new Date(monthStart);
-                const todayDateObj = new Date();
+                const now = new Date(); const monthStart = new Date(now.getFullYear(), now.getMonth(), 1); let daysChecked = 0; let daysPerfect = 0; let scanDate = new Date(monthStart); const todayDateObj = new Date();
                 while(scanDate <= todayDateObj) {
-                    const dStr = scanDate.toISOString().split('T')[0];
-                    const s = this.getDayCompletionStatus(dStr);
-                    if (s.required > 0) {
-                        daysChecked++;
-                        if (s.complete) daysPerfect++;
-                    }
+                    const dStr = scanDate.toISOString().split('T')[0]; const s = this.getDayCompletionStatus(dStr);
+                    if (s.required > 0) { daysChecked++; if (s.complete) daysPerfect++; }
                     scanDate.setDate(scanDate.getDate() + 1);
                 }
                 const adherence = daysChecked === 0 ? 0 : Math.round((daysPerfect / daysChecked) * 100);
@@ -642,106 +460,33 @@
             }
 
             getDayCompletionStatus(dateStr) {
-                const logs = this.state.logs[dateStr] || {};
-                const takenIds = Object.keys(logs);
-                let required = 0;
-                let taken = 0;
-                // Safe access to medications array
-                (this.state.medications || []).filter(m => !m.deleted).forEach(med => {
-                    if (this.isDue(med, dateStr)) {
-                        required++;
-                        if (takenIds.includes(med.id)) taken++;
-                    }
-                });
+                const logs = this.state.logs[dateStr] || {}; const takenIds = Object.keys(logs);
+                let required = 0; let taken = 0;
+                (this.state.medications || []).filter(m => !m.deleted).forEach(med => { if (this.isDue(med, dateStr)) { required++; if (takenIds.includes(med.id)) taken++; } });
                 return { required, taken, complete: required > 0 && required === taken };
             }
 
-            toggleLog(medId) {
-                if (!this.state.logs[this.today]) this.state.logs[this.today] = {};
-                if (this.state.logs[this.today][medId]) {
-                    delete this.state.logs[this.today][medId];
-                    if (Object.keys(this.state.logs[this.today]).length === 0) delete this.state.logs[this.today];
-                    this.saveData();
-                    this.showToast("Marked as Not Taken");
-                } else {
-                    this.state.logs[this.today][medId] = { timestamp: Date.now(), value: true };
-                    this.saveData();
-                    this.showToast("Logged!");
-                    if (this.getDayCompletionStatus(this.today).complete) this.triggerCelebration();
+            renderGamification() {
+                const stats = this.calculateStats();
+                const sEl = document.getElementById('streak-count'); if(sEl) sEl.textContent = stats.streak;
+                const bEl = document.getElementById('best-streak-count'); if(bEl) bEl.textContent = stats.bestStreak;
+                const icon = document.getElementById('streak-fire-icon');
+                const msg = document.getElementById('streak-message');
+                if(icon && msg) {
+                    if (stats.streak > 0) { icon.classList.add('text-orange-400', 'pulse-fire'); icon.classList.remove('text-slate-300'); msg.textContent = stats.streak > 3 ? "You're on fire! 🔥" : "Good start!"; }
+                    else { icon.classList.remove('text-orange-400', 'pulse-fire'); icon.classList.add('text-slate-300'); msg.textContent = "Start a streak today!"; }
                 }
+                const aEl = document.getElementById('adherence-rate'); if(aEl) aEl.textContent = stats.adherence + "%";
             }
-
-            // --- Testing Logic ---
-            generateMockData() {
-                this.showConfirm("Overwrite current data with 100 days of test history?", () => {
-                    this.state.logs = {};
-                    const meds = this.state.medications.filter(m => !m.deleted);
-                    const today = new Date();
-                    for (let i = 0; i < 100; i++) {
-                        const d = new Date();
-                        d.setDate(today.getDate() - i);
-                        const offset = d.getTimezoneOffset() * 60000;
-                        const dateStr = new Date(d.getTime() - offset).toISOString().split('T')[0];
-                        this.state.logs[dateStr] = {};
-                        meds.forEach(med => {
-                            if (this.isDue(med, dateStr)) {
-                                if (Math.random() > 0.1) this.state.logs[dateStr][med.id] = { timestamp: Date.now(), value: true };
-                            } else {
-                                if (Math.random() > 0.95) this.state.logs[dateStr][med.id] = { timestamp: Date.now(), value: true };
-                            }
-                        });
-                        if (Object.keys(this.state.logs[dateStr]).length === 0) delete this.state.logs[dateStr];
-                    }
-                    this.saveData();
-                    this.showToast("Generated 100 days of data");
-                    this.toggleSettings();
-                });
-            }
-
-            showConfirm(msg, callback) {
-                document.getElementById('confirm-msg').textContent = msg;
-                this.pendingAction = callback;
-                document.getElementById('confirm-modal').classList.remove('hidden');
-            }
-            closeConfirm() {
-                document.getElementById('confirm-modal').classList.add('hidden');
-                this.pendingAction = null;
-            }
-            confirmAction() { if (this.pendingAction) this.pendingAction(); this.closeConfirm(); }
-
-            // --- UI Rendering ---
-            renderUI() {
-                this.renderGamification();
-                this.renderDashboard();
-                this.renderHistoryList();
-                this.renderCalendar();
-                this.renderSettingsList();
-                this.renderNotifications();
-            }
-
+            
             renderDashboard() {
                 const container = document.getElementById('medication-cards-container');
                 container.innerHTML = '';
-                // Safety check: ensure filter works even if medications is empty/null
                 const activeMeds = (this.state.medications || []).filter(m => !m.deleted);
-
-                // EMPTY STATE
                 if (activeMeds.length === 0) {
-                    container.innerHTML = `
-                        <div class="text-center py-10 bg-white/50 rounded-3xl border border-dashed border-slate-300">
-                            <div class="w-16 h-16 bg-white rounded-full flex items-center justify-center mx-auto shadow-sm mb-4">
-                                <i class="ph-fill ph-pill-plus text-3xl text-indigo-400"></i>
-                            </div>
-                            <h3 class="font-bold text-slate-700 text-lg mb-1">No medications yet</h3>
-                            <p class="text-xs text-slate-400 mb-5 max-w-[200px] mx-auto">Add your first pill to start tracking your daily streak.</p>
-                            <button onclick="window.app.openAddMedModal()" class="px-6 py-3 bg-indigo-600 text-white rounded-full font-bold shadow-lg shadow-indigo-200 hover:bg-indigo-700 transition-all btn-press flex items-center gap-2 mx-auto animate-bounce">
-                                <i class="ph-bold ph-plus"></i> Add Medication
-                            </button>
-                        </div>
-                    `;
+                    container.innerHTML = `<div class="text-center py-10 bg-white/50 rounded-3xl border border-dashed border-slate-300"><div class="w-16 h-16 bg-white rounded-full flex items-center justify-center mx-auto shadow-sm mb-4"><i class="ph-fill ph-pill-plus text-3xl text-indigo-400"></i></div><h3 class="font-bold text-slate-700 text-lg mb-1">No medications yet</h3><p class="text-xs text-slate-400 mb-5 max-w-[200px] mx-auto">Add your first pill to start tracking your daily streak.</p><button onclick="window.app.openAddMedModal()" class="px-6 py-3 bg-indigo-600 text-white rounded-full font-bold shadow-lg shadow-indigo-200 hover:bg-indigo-700 transition-all btn-press flex items-center gap-2 mx-auto animate-bounce"><i class="ph-bold ph-plus"></i> Add Medication</button></div>`;
                     return;
                 }
-
                 activeMeds.forEach(med => {
                     const status = this.checkStatus(med);
                     const colorData = this.colors.find(c => c.name === med.color) || this.colors[0];
@@ -775,77 +520,47 @@
                     container.appendChild(card);
                 });
             }
-
-            renderGamification() {
-                const stats = this.calculateStats();
-                document.getElementById('streak-count').textContent = stats.streak;
-                document.getElementById('best-streak-count').textContent = stats.bestStreak;
-                const fireIcon = document.getElementById('streak-fire-icon');
-                const msg = document.getElementById('streak-message');
-                if (stats.streak > 0) {
-                    fireIcon.classList.add('text-orange-400', 'pulse-fire');
-                    fireIcon.classList.remove('text-slate-300');
-                    msg.textContent = stats.streak > 3 ? "You're on fire! 🔥" : "Good start!";
-                } else {
-                    fireIcon.classList.remove('text-orange-400', 'pulse-fire');
-                    fireIcon.classList.add('text-slate-300');
-                    msg.textContent = "Start a streak today!";
-                }
-                document.getElementById('adherence-rate').textContent = stats.adherence + "%";
-            }
-
+            
             renderHistoryList() {
                 const list = document.getElementById('history-list');
-                const prevBtn = document.getElementById('btn-prev-page');
-                const nextBtn = document.getElementById('btn-next-page');
-                const pageInd = document.getElementById('page-indicator');
-                
+                const prevBtn = document.getElementById('btn-prev-page'); const nextBtn = document.getElementById('btn-next-page'); const pageInd = document.getElementById('page-indicator');
                 list.innerHTML = '';
                 const allDates = Object.keys(this.state.logs).sort().reverse();
                 const totalPages = Math.ceil(allDates.length / this.ITEMS_PER_PAGE);
                 const start = this.historyPage * this.ITEMS_PER_PAGE;
                 const end = start + this.ITEMS_PER_PAGE;
                 const pageDates = allDates.slice(start, end);
-                
-                pageInd.textContent = `${this.historyPage + 1} / ${totalPages || 1}`;
-                prevBtn.disabled = this.historyPage === 0;
-                nextBtn.disabled = end >= allDates.length;
+                pageInd.textContent = `${this.historyPage + 1} / ${totalPages || 1}`; prevBtn.disabled = this.historyPage === 0; nextBtn.disabled = end >= allDates.length;
 
-                if (pageDates.length === 0) { list.innerHTML = '<div class="text-center text-slate-300 text-xs font-medium py-8">No history yet</div>'; return; }
+                if (pageDates.length === 0) { list.innerHTML = '<div class="text-center text-slate-300 text-xs font-medium py-8">No medication history</div>'; return; }
 
                 pageDates.forEach(date => {
-                    const dayLogs = this.state.logs[date];
-                    if (!dayLogs) return;
+                    const dayLogs = this.state.logs[date]; if (!dayLogs) return;
                     const d = new Date(date + 'T00:00:00');
                     const weekday = d.toLocaleDateString('en-US', { weekday: 'short' });
                     let pillsHtml = '';
-                    Object.keys(dayLogs).forEach(medId => {
-                        const med = this.state.medications.find(m => m.id === medId);
-                        // Med might be deleted/archived, but we still show it in history!
-                        if (med) { const colorData = this.colors.find(c => c.name === med.color); pillsHtml += `<div class="w-2 h-2 rounded-full ${colorData.bg}"></div>`; }
-                    });
+                    Object.keys(dayLogs).forEach(medId => { const med = this.state.medications.find(m => m.id === medId); if (med) { const colorData = this.colors.find(c => c.name === med.color); pillsHtml += `<div class="w-2 h-2 rounded-full ${colorData.bg}"></div>`; } });
                     list.innerHTML += `<div class="flex items-center justify-between py-3 px-4 border-b border-slate-50 last:border-0 hover:bg-slate-50 transition-colors cursor-pointer group" onclick="window.app.openDayDetails('${date}')"><div class="flex items-center gap-3"><div class="flex flex-col items-center justify-center w-10 h-10 rounded-lg bg-slate-50 text-slate-500 font-bold group-hover:bg-indigo-50 group-hover:text-indigo-600 transition-colors"><span class="text-[9px] uppercase leading-none">${weekday}</span><span class="text-lg leading-none mt-0.5">${d.getDate()}</span></div><div class="flex gap-1.5">${pillsHtml}</div></div><i class="ph-bold ph-caret-right text-slate-300 group-hover:text-indigo-400"></i></div>`;
                 });
             }
 
+            // Updated Calendar with Indicators
             renderCalendar() {
-                const year = this.currentCalendarDate.getFullYear();
-                const month = this.currentCalendarDate.getMonth();
+                const year = this.currentCalendarDate.getFullYear(); const month = this.currentCalendarDate.getMonth();
                 document.getElementById('calendar-month-title').textContent = this.currentCalendarDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
-                const firstDay = new Date(year, month, 1);
-                const lastDay = new Date(year, month + 1, 0);
-                const daysInMonth = lastDay.getDate();
-                const startDayIndex = firstDay.getDay();
-                const grid = document.getElementById('calendar-days');
-                grid.innerHTML = '';
+                const firstDay = new Date(year, month, 1); const lastDay = new Date(year, month + 1, 0); const daysInMonth = lastDay.getDate(); const startDayIndex = firstDay.getDay();
+                const grid = document.getElementById('calendar-days'); grid.innerHTML = '';
                 for (let i = 0; i < startDayIndex; i++) grid.innerHTML += `<div></div>`;
                 const todayDate = new Date(); todayDate.setHours(0,0,0,0);
+                
                 for (let day = 1; day <= daysInMonth; day++) {
                     const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
                     const currentLoopDate = new Date(year, month, day);
                     const completion = this.getDayCompletionStatus(dateStr);
-                    let colorClass = "bg-slate-50 text-slate-600 hover:bg-slate-100";
-                    let isTodayClass = "";
+                    const hasWeight = this.state.weightLogs[dateStr];
+                    const hasNote = this.state.noteLogs[dateStr];
+                    
+                    let colorClass = "bg-slate-50 text-slate-600 hover:bg-slate-100"; let isTodayClass = "";
                     if (currentLoopDate <= todayDate) {
                         if (completion.required > 0) {
                             if (completion.complete) colorClass = "bg-emerald-100 text-emerald-700 ring-1 ring-emerald-200 shadow-sm";
@@ -854,66 +569,201 @@
                         }
                     }
                     if (dateStr === this.today) isTodayClass = "ring-2 ring-offset-2 ring-indigo-500 z-10 font-black";
-                    grid.innerHTML += `<div class="calendar-day ${colorClass} ${isTodayClass}" onclick="window.app.openDayDetails('${dateStr}')"><span>${day}</span></div>`;
+                    
+                    let indicators = '';
+                    if (hasWeight) indicators += `<div class="w-1 h-1 rounded-full bg-purple-400"></div>`;
+                    if (hasNote) indicators += `<div class="w-1 h-1 rounded-full bg-slate-400"></div>`;
+
+                    grid.innerHTML += `<div class="calendar-day ${colorClass} ${isTodayClass}" onclick="window.app.openDayDetails('${dateStr}')"><span class="mb-0.5">${day}</span><div class="dot-container flex gap-0.5">${indicators}</div></div>`;
                 }
-            }
-            
-            renderNotifications() {
-                const panel = document.getElementById('notification-list');
-                const badge = document.getElementById('notif-badge');
-                panel.innerHTML = '';
-                let dueCount = 0;
-                this.state.medications.filter(m => !m.deleted).forEach(med => {
-                    const status = this.checkStatus(med);
-                    if (status.status === 'due' || (status.status === 'neutral' && med.schedule === 'daily')) {
-                         if (!(this.state.logs[this.today] && this.state.logs[this.today][med.id])) {
-                             dueCount++;
-                             panel.innerHTML += `<div class="flex items-center justify-between p-2.5 hover:bg-slate-50 rounded-xl mb-1 border border-transparent hover:border-slate-100 transition-colors"><span class="text-sm font-bold text-slate-700">${med.name}</span><button onclick="window.app.toggleLog('${med.id}')" class="text-xs font-bold text-white bg-indigo-500 hover:bg-indigo-600 px-3 py-1.5 rounded-full shadow-sm">Take</button></div>`;
-                         }
-                    }
-                });
-                if (dueCount > 0) { badge.classList.remove('hidden'); if(panel.innerHTML === '') panel.innerHTML = '<div class="text-xs text-slate-400 p-2">All caught up!</div>'; }
-                else { badge.classList.add('hidden'); panel.innerHTML = '<div class="text-center text-sm font-medium text-slate-400 py-6">All meds taken!</div>'; }
             }
 
             openDayDetails(dateStr) {
                 const modal = document.getElementById('day-details-modal');
                 const d = new Date(dateStr + 'T00:00:00');
+                const todayDate = new Date(); todayDate.setHours(0,0,0,0);
+                const checkDate = new Date(dateStr + 'T00:00:00');
+                const isFuture = checkDate > todayDate;
+                const isToday = checkDate.getTime() === todayDate.getTime();
+
                 document.getElementById('detail-date-title').textContent = d.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
                 const takenList = document.getElementById('detail-taken-list');
                 const missedList = document.getElementById('detail-missed-list');
+                const missedTitle = document.getElementById('detail-missed-title');
+                const journalSection = document.getElementById('detail-journal-section');
                 takenList.innerHTML = ''; missedList.innerHTML = '';
+                
+                if (isFuture) { missedTitle.textContent = "Scheduled"; missedTitle.className = "text-[10px] font-bold text-blue-400 uppercase tracking-widest mb-3"; }
+                else if (isToday) { missedTitle.textContent = "Due Today"; missedTitle.className = "text-[10px] font-bold text-indigo-400 uppercase tracking-widest mb-3"; }
+                else { missedTitle.textContent = "Missed"; missedTitle.className = "text-[10px] font-bold text-red-400 uppercase tracking-widest mb-3"; }
+
                 const dayLogs = this.state.logs[dateStr] || {};
                 const takenIds = Object.keys(dayLogs);
                 if (takenIds.length === 0) takenList.innerHTML = '<div class="text-xs text-slate-400 italic font-medium">Nothing logged</div>';
-                takenIds.forEach(id => {
-                    const med = this.state.medications.find(m => m.id === id);
-                    if (med) takenList.innerHTML += `<div class="p-3 rounded-xl bg-emerald-50 border border-emerald-100 flex items-center gap-3"><i class="ph-fill ph-check-circle text-emerald-500 text-lg"></i><span class="text-sm font-bold text-slate-700">${med.name}</span></div>`;
+                takenIds.forEach(id => { const med = this.state.medications.find(m => m.id === id); if (med) takenList.innerHTML += `<div class="p-3 rounded-xl bg-emerald-50 border border-emerald-100 flex items-center gap-3"><i class="ph-fill ph-check-circle text-emerald-500 text-lg"></i><span class="text-sm font-bold text-slate-700">${med.name}</span></div>`; });
+
+                let missedCount = 0; let requiredCount = 0;
+                (this.state.medications || []).filter(m => !m.deleted).forEach(med => {
+                     if (this.isDue(med, dateStr)) { 
+                        requiredCount++; 
+                        if (!takenIds.includes(med.id)) { 
+                             let style = "bg-red-50 border-red-100 text-red-500"; let icon = "ph-warning-circle";
+                             if (isFuture) { style = "bg-blue-50 border-blue-100 text-blue-500"; icon = "ph-clock"; }
+                             else if (isToday) { style = "bg-indigo-50 border-indigo-100 text-indigo-500"; icon = "ph-circle"; }
+                             missedList.innerHTML += `<div class="p-3 rounded-xl border ${style} flex items-center gap-3"><i class="ph-fill ${icon} text-lg"></i><span class="text-sm font-bold text-slate-700">${med.name}</span></div>`; 
+                             missedCount++; 
+                        } 
+                    }
                 });
-                let missedCount = 0;
-                this.state.medications.filter(m => !m.deleted).forEach(med => {
-                     if (this.isDue(med, dateStr) && !takenIds.includes(med.id)) {
-                         missedList.innerHTML += `<div class="p-3 rounded-xl bg-red-50 border border-red-100 flex items-center gap-3"><i class="ph-fill ph-warning-circle text-red-500 text-lg"></i><span class="text-sm font-bold text-slate-700">${med.name}</span></div>`;
-                         missedCount++;
-                     }
-                });
-                if (missedCount === 0) missedList.innerHTML = '<div class="text-xs font-bold text-emerald-600 flex items-center gap-1 bg-emerald-50 inline-block px-2 py-1 rounded-lg">100% Complete</div>';
+                
+                if (missedCount === 0) { 
+                    if (requiredCount === 0) missedList.innerHTML = '<div class="text-xs font-bold text-slate-400 flex items-center gap-1 bg-slate-50 inline-block px-2 py-1 rounded-lg">No medications scheduled</div>'; 
+                    else if (!isFuture) missedList.innerHTML = '<div class="text-xs font-bold text-emerald-600 flex items-center gap-1 bg-emerald-50 inline-block px-2 py-1 rounded-lg">100% Complete</div>'; 
+                    else missedList.innerHTML = '<div class="text-xs text-slate-400 italic font-medium">Nothing pending</div>'; 
+                }
+
+                const w = this.state.weightLogs[dateStr]; const n = this.state.noteLogs[dateStr];
+                if (w || n) {
+                    journalSection.classList.remove('hidden'); let content = '';
+                    if (w) content += `<div class="flex items-center gap-2 mb-2"><i class="ph-fill ph-scales text-purple-400"></i> <span class="font-bold">${w} ${this.state.userProfile.unit}</span></div>`;
+                    if (n) content += `<div class="flex items-start gap-2"><i class="ph-fill ph-notebook text-amber-400 mt-0.5"></i> <span class="italic">"${n}"</span></div>`;
+                    document.getElementById('detail-journal-content').innerHTML = content;
+                } else { journalSection.classList.add('hidden'); }
                 modal.classList.remove('hidden');
             }
 
-            renderSettingsList() {
-                const list = document.getElementById('settings-med-list');
-                list.innerHTML = '';
-                this.state.medications.filter(m => !m.deleted).forEach(med => {
-                    const colorData = this.colors.find(c => c.name === med.color);
-                    let scheduleText = med.schedule;
-                    if (med.schedule === 'weekly') scheduleText = "Weekly"; if (med.schedule === 'monthly') scheduleText = "Monthly"; if (med.schedule === 'alternate') scheduleText = "Every Other Day";
-                    list.innerHTML += `<div class="flex items-center justify-between p-3.5 bg-slate-50 hover:bg-slate-100 rounded-2xl transition-colors group"><div class="flex items-center gap-3.5"><div class="w-10 h-10 rounded-xl ${colorData.bg} flex items-center justify-center text-white shadow-sm"><span class="font-bold text-sm">${med.name[0]}</span></div><div><div class="font-bold text-sm text-slate-700">${med.name}</div><div class="text-[10px] font-bold text-slate-400 uppercase tracking-wide">${scheduleText}</div></div></div><button onclick="window.app.deleteMedication('${med.id}')" class="w-8 h-8 flex items-center justify-center text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-full transition-all"><i class="ph-bold ph-trash"></i></button></div>`;
+            setChartRange(range) {
+                this.chartRange = range;
+                document.querySelectorAll('.chart-range-btn').forEach(btn => {
+                    if(btn.dataset.range === range) btn.className = "chart-range-btn text-[10px] font-bold px-2 py-1 rounded bg-indigo-100 text-indigo-600 transition-colors";
+                    else btn.className = "chart-range-btn text-[10px] font-bold px-2 py-1 rounded bg-slate-100 text-slate-500 hover:bg-indigo-100 hover:text-indigo-600 transition-colors";
                 });
+                this.drawChart();
             }
 
+            drawChart() {
+                const canvas = document.getElementById('weight-chart'); if(!canvas) return;
+                const ctx = canvas.getContext('2d');
+                const dpr = window.devicePixelRatio || 1; const rect = canvas.getBoundingClientRect();
+                canvas.width = rect.width * dpr; canvas.height = rect.height * dpr; ctx.scale(dpr, dpr);
+                const w = rect.width; const h = rect.height;
+
+                const now = new Date();
+                let cutoff = new Date(0); 
+                if (this.chartRange === '1m') cutoff.setMonth(now.getMonth() - 1);
+                else if (this.chartRange === '3m') cutoff.setMonth(now.getMonth() - 3);
+                else if (this.chartRange === '6m') cutoff.setMonth(now.getMonth() - 6);
+                else if (this.chartRange === '1y') cutoff.setFullYear(now.getFullYear() - 1);
+
+                const allData = Object.entries(this.state.weightLogs).sort((a,b) => a[0].localeCompare(b[0]));
+                const data = allData.filter(d => new Date(d[0]) >= cutoff);
+
+                ctx.clearRect(0,0,w,h);
+                ctx.strokeStyle = "#f1f5f9"; ctx.lineWidth = 1;
+                for(let i=1; i<5; i++) { let y = (h/5)*i; ctx.beginPath(); ctx.moveTo(40, y); ctx.lineTo(w, y); ctx.stroke(); }
+                if(data.length === 0) { ctx.fillStyle = "#94a3b8"; ctx.font = "12px Inter"; ctx.textAlign = "center"; ctx.fillText("No data for this period", w/2+20, h/2); return; }
+                const vals = data.map(d => d[1]); let min = Math.min(...vals); let max = Math.max(...vals);
+                if(min === max) { min -= 2; max += 2; } else { const buf = (max-min)*0.1; min-=buf; max+=buf; }
+                const range = max - min;
+                const getX = (i) => (data.length === 1) ? (w/2 + 20) : (i / (data.length - 1)) * (w - 50) + 40;
+                const getY = (v) => h - 20 - ((v - min) / range) * (h - 40);
+                ctx.fillStyle = "#64748b"; ctx.font = "10px Inter"; ctx.textAlign = "right";
+                ctx.fillText(max.toFixed(1), 35, 20); ctx.fillText(min.toFixed(1), 35, h-20); ctx.fillText(((min+max)/2).toFixed(1), 35, h/2);
+                if (data.length > 1) {
+                    ctx.beginPath(); ctx.strokeStyle = "#4f46e5"; ctx.lineWidth = 3; ctx.lineCap = "round"; ctx.lineJoin = "round";
+                    data.forEach((d, i) => { const x = getX(i); const y = getY(d[1]); if(i===0) ctx.moveTo(x, y); else ctx.lineTo(x, y); });
+                    ctx.stroke();
+                    const grad = ctx.createLinearGradient(0, 0, 0, h); grad.addColorStop(0, "rgba(79, 70, 229, 0.2)"); grad.addColorStop(1, "rgba(79, 70, 229, 0)");
+                    ctx.lineTo(getX(data.length-1), h); ctx.lineTo(getX(0), h); ctx.closePath(); ctx.fillStyle = grad; ctx.fill();
+                }
+                ctx.fillStyle = "#fff"; ctx.strokeStyle = "#4f46e5"; ctx.lineWidth = 2;
+                data.forEach((d, i) => { const x = getX(i); const y = getY(d[1]); ctx.beginPath(); ctx.arc(x, y, 4, 0, Math.PI*2); ctx.fill(); ctx.stroke(); });
+                ctx.fillStyle = "#94a3b8"; ctx.textAlign = "center";
+                if(data.length > 1) { ctx.fillText(new Date(data[0][0]).toLocaleDateString(undefined,{month:'short',day:'numeric'}), getX(0), h-5); ctx.fillText(new Date(data[data.length-1][0]).toLocaleDateString(undefined,{month:'short',day:'numeric'}), getX(data.length-1), h-5); } else { ctx.fillText(new Date(data[0][0]).toLocaleDateString(undefined,{month:'short',day:'numeric'}), getX(0), h-5); }
+                canvas.onclick = (e) => {
+                    const rect = canvas.getBoundingClientRect(); const clickX = e.clientX - rect.left;
+                    let closest = null; let minDist = 999;
+                    data.forEach((d, i) => { const x = getX(i); const dist = Math.abs(x - clickX); if(dist < minDist) { minDist = dist; closest = d; } });
+                    if(closest && minDist < 40) {
+                        const tip = document.getElementById('chart-tooltip'); const idx = data.indexOf(closest);
+                        tip.style.left = (getX(idx) + 10) + 'px'; tip.style.top = (getY(closest[1]) + 10) + 'px';
+                        tip.textContent = `${closest[0].slice(5)}: ${closest[1]}`; tip.style.opacity = 1;
+                        setTimeout(() => tip.style.opacity = 0, 2000);
+                    }
+                };
+            }
+            
+            logJournalEntry() {
+                const date = document.getElementById('journal-date').value; if(!date) return alert("Please select a date");
+                const weightVal = document.getElementById('weight-input').value; const noteVal = document.getElementById('note-input').value.trim();
+                let updated = false;
+                if (weightVal) { this.state.weightLogs[date] = parseFloat(weightVal); updated = true; }
+                if (noteVal) { if (this.state.noteLogs[date]) this.state.noteLogs[date] += "\n\n" + noteVal; else this.state.noteLogs[date] = noteVal; updated = true; }
+                if(updated) { this.saveData(); this.showToast("Entry saved"); document.getElementById('note-input').value = ''; }
+            }
+            deleteJournalEntry(date, type) { if(type === 'weight') delete this.state.weightLogs[date]; if(type === 'note') delete this.state.noteLogs[date]; this.saveData(); }
+            getBMI() { const h = parseFloat(this.state.userProfile.height); const dates = Object.keys(this.state.weightLogs).sort().reverse(); if (dates.length === 0) return null; return this.calculateBMI(this.state.weightLogs[dates[0]]); }
+            calculateBMI(weight) { const h = parseFloat(this.state.userProfile.height); if (!h || !weight) return null; let w = weight; if (this.state.userProfile.unit === 'lbs') w = weight * 0.453592; const hm = h / 100; const bmi = w / (hm * hm); let l = "Normal", c = "text-emerald-600 bg-emerald-50 border-emerald-100"; if (bmi < 18.5) { l = "Underweight"; c = "text-blue-600 bg-blue-50 border-blue-100"; } else if (bmi >= 25 && bmi < 30) { l = "Overweight"; c = "text-amber-600 bg-amber-50 border-amber-100"; } else if (bmi >= 30) { l = "Obese"; c = "text-red-600 bg-red-50 border-red-100"; } return { value: bmi.toFixed(1), label: l, color: c }; }
+            
+            renderJournal() {
+                document.getElementById('weight-unit-label').textContent = this.state.userProfile.unit;
+                const dateInput = document.getElementById('journal-date'); if (!dateInput.value) dateInput.value = this.today;
+                const selectedDate = dateInput.value; const w = this.state.weightLogs[selectedDate];
+                document.getElementById('weight-input').value = w || '';
+                const bmi = this.getBMI(); const badge = document.getElementById('bmi-badge');
+                if (bmi) { badge.classList.remove('hidden'); badge.setAttribute('class', `px-2.5 py-1 rounded-lg text-xs font-bold border ${bmi.color}`); badge.textContent = `BMI: ${bmi.value} (${bmi.label})`; document.getElementById('height-nudge').classList.add('hidden'); } else if (!this.state.userProfile.height) { badge.classList.add('hidden'); document.getElementById('height-nudge').classList.remove('hidden'); }
+                const list = document.getElementById('journal-history-list'); list.innerHTML = '';
+                const allDates = new Set([...Object.keys(this.state.weightLogs), ...Object.keys(this.state.noteLogs)]); const sorted = Array.from(allDates).sort().reverse();
+                const ITEMS = 5; const total = Math.ceil(sorted.length/ITEMS); const start = this.journalPage*ITEMS; const end = start+ITEMS; const items = sorted.slice(start, end);
+                document.getElementById('btn-j-prev').disabled = this.journalPage === 0; document.getElementById('btn-j-next').disabled = end >= sorted.length;
+                if (items.length === 0) { list.innerHTML = '<div class="text-center text-slate-300 text-xs italic py-4">No entries yet</div>'; return; }
+                items.forEach(date => {
+                    const w = this.state.weightLogs[date]; const n = this.state.noteLogs[date]; let bDis = '';
+                    if (w && this.state.userProfile.height) { const b = this.calculateBMI(w); if(b) bDis = `<span class="text-[9px] font-bold ${b.color} px-1.5 py-0.5 rounded ml-2 border">BMI ${b.value}</span>`; }
+                    let html = `<div class="bg-white p-3 rounded-xl border border-slate-100 shadow-sm"><div class="flex justify-between items-center mb-1"><span class="text-xs font-bold text-slate-400">${date}</span><div class="flex gap-2">`;
+                    if(w) html += `<button onclick="window.app.deleteJournalEntry('${date}','weight')" class="text-[10px] text-red-300 hover:text-red-500 font-medium">Del W</button>`;
+                    if(n) html += `<button onclick="window.app.deleteJournalEntry('${date}','note')" class="text-[10px] text-red-300 hover:text-red-500 font-medium">Del N</button>`;
+                    html += `</div></div>`;
+                    if (w) html += `<div class="flex items-center mb-1"><i class="ph-fill ph-scales text-purple-400 mr-2"></i> <span class="font-bold text-slate-700 text-sm">${w} ${this.state.userProfile.unit}</span> ${bDis}</div>`;
+                    if (n) html += `<div class="flex items-start gap-2"><i class="ph-fill ph-notebook text-amber-400 mt-0.5"></i> <span class="text-xs text-slate-600 italic whitespace-pre-wrap">${n}</span></div>`;
+                    list.innerHTML += html + `</div>`;
+                });
+            }
+            changeJournalPage(d) { this.journalPage += d; if(this.journalPage < 0) this.journalPage = 0; this.renderJournal(); }
+            
+            // --- View Switching ---
+            switchView(viewName) {
+                ['dashboard', 'journal', 'calendar'].forEach(v => {
+                    const el = document.getElementById('view-' + v);
+                    const btn = document.getElementById('nav-' + v);
+                    if (v === viewName) {
+                        el.classList.remove('hidden');
+                        btn.className = "flex items-center gap-2 px-5 py-3 rounded-full bg-indigo-600 text-white shadow-md transition-all duration-300";
+                    } else {
+                        el.classList.add('hidden');
+                        btn.className = "flex items-center gap-2 px-5 py-3 rounded-full text-slate-500 hover:bg-slate-50 transition-all duration-300";
+                    }
+                });
+                if (viewName === 'calendar') this.renderCalendar();
+                if (viewName === 'journal') { this.renderJournal(); setTimeout(() => this.drawChart(), 100); }
+            }
+            renderUI() { 
+                this.renderGamification(); 
+                this.renderDashboard(); 
+                this.renderHistoryList(); 
+                this.renderCalendar(); 
+                this.renderSettingsList(); 
+                this.renderNotifications(); 
+                this.renderJournal();
+                if(document.getElementById('view-journal') && !document.getElementById('view-journal').classList.contains('hidden')) this.drawChart(); 
+            }
+            
+            // Boilerplate Helpers
+            initWeekCheckboxes() { const c = document.getElementById('week-checkboxes'); c.innerHTML = ''; ['S','M','T','W','T','F','S'].forEach((d,i) => { let val = i; if(i===0) val=0; else val=i; c.innerHTML += `<label class="cursor-pointer group"><input type="checkbox" class="hidden day-checkbox" value="${val}"><div class="w-9 h-9 rounded-full border border-slate-200 bg-white flex items-center justify-center text-xs font-bold text-slate-400 transition-all group-hover:border-indigo-200">${d}</div></label>`; }); }
+            renderSettingsList() { const list = document.getElementById('settings-med-list'); list.innerHTML = ''; (this.state.medications || []).filter(m => !m.deleted).forEach(med => { const colorData = this.colors.find(c => c.name === med.color); let scheduleText = med.schedule; if (med.schedule === 'weekly') scheduleText = "Weekly"; if (med.schedule === 'monthly') scheduleText = "Monthly"; if (med.schedule === 'alternate') scheduleText = "Every Other Day"; list.innerHTML += `<div class="flex items-center justify-between p-3.5 bg-slate-50 hover:bg-slate-100 rounded-2xl transition-colors group"><div class="flex items-center gap-3.5"><div class="w-10 h-10 rounded-xl ${colorData.bg} flex items-center justify-center text-white shadow-sm"><span class="font-bold text-sm">${med.name[0]}</span></div><div><div class="font-bold text-sm text-slate-700">${med.name}</div><div class="text-[10px] font-bold text-slate-400 uppercase tracking-wide">${scheduleText}</div></div></div><button onclick="window.app.deleteMedication('${med.id}')" class="w-8 h-8 flex items-center justify-center text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-full transition-all"><i class="ph-bold ph-trash"></i></button></div>`; }); }
             renderColorPicker() {
                 const container = document.getElementById('color-picker');
+                if (!container) return;
                 container.innerHTML = '';
                 this.colors.forEach(c => {
                     const isSelected = this.selectedColor === c.name;
@@ -921,174 +771,34 @@
                 });
             }
             selectColor(name) { this.selectedColor = name; this.renderColorPicker(); }
-            
             toggleNotifications() { document.getElementById('notification-panel').classList.toggle('hidden'); }
             toggleSettings() { document.getElementById('settings-modal').classList.toggle('hidden'); }
-            toggleScheduleInputs() {
-                const type = document.getElementById('new-med-schedule-type').value;
-                ['daily','alternate','weekly','monthly'].forEach(t => document.getElementById('input-'+t).classList.add('hidden'));
-                document.getElementById('input-'+type).classList.remove('hidden');
-            }
-            
+            toggleScheduleInputs() { const type = document.getElementById('new-med-schedule-type').value; ['daily','alternate','weekly','monthly'].forEach(t => document.getElementById('input-'+t).classList.add('hidden')); document.getElementById('input-'+type).classList.remove('hidden'); }
             changeHistoryPage(d) { this.historyPage += d; if (this.historyPage < 0) this.historyPage = 0; this.renderHistoryList(); }
             changeMonth(d) { this.currentCalendarDate.setMonth(this.currentCalendarDate.getMonth() + d); this.renderCalendar(); }
+            resizeCanvas() { this.confettiCanvas.width = window.innerWidth; this.confettiCanvas.height = window.innerHeight; this.drawChart(); }
+            triggerCelebration() { const overlay = document.getElementById('celebration-overlay'); overlay.classList.remove('hidden'); setTimeout(() => overlay.classList.add('hidden'), 2500); this.fireConfetti(); }
+            showToast(msg) { const t = document.getElementById('toast'); document.getElementById('toast-msg').textContent = msg; t.classList.remove('translate-y-20', 'opacity-0'); setTimeout(() => t.classList.add('translate-y-20', 'opacity-0'), 2500); }
+            fireConfetti() { const particles = []; const colors = ['#4f46e5', '#ec4899', '#10b981', '#f59e0b']; for (let i = 0; i < 100; i++) particles.push({ x: window.innerWidth/2, y: window.innerHeight/2, vx: (Math.random()-0.5)*20, vy: (Math.random()-1)*20, size: Math.random()*8+4, color: colors[Math.floor(Math.random()*colors.length)], life: 100, gravity: 0.6 }); const animate = () => { this.ctx.clearRect(0,0,window.innerWidth,window.innerHeight); let active = false; particles.forEach(p => { if(p.life>0){ active=true; p.x+=p.vx; p.y+=p.vy; p.vy+=p.gravity; p.life--; p.size*=0.96; this.ctx.fillStyle=p.color; this.ctx.beginPath(); this.ctx.arc(p.x,p.y,p.size,0,Math.PI*2); this.ctx.fill(); } }); if(active) requestAnimationFrame(animate); }; animate(); }
+            renderNotifications() { const panel = document.getElementById('notification-list'); const badge = document.getElementById('notif-badge'); panel.innerHTML = ''; let dueCount = 0; (this.state.medications || []).filter(m => !m.deleted).forEach(med => { const status = this.checkStatus(med); if (status.status === 'due' || (status.status === 'neutral' && med.schedule === 'daily')) { if (!(this.state.logs[this.today] && this.state.logs[this.today][med.id])) { dueCount++; panel.innerHTML += `<div class="flex items-center justify-between p-2.5 hover:bg-slate-50 rounded-xl mb-1 border border-transparent hover:border-slate-100 transition-colors"><span class="text-sm font-bold text-slate-700">${med.name}</span><button onclick="window.app.toggleLog('${med.id}')" class="text-xs font-bold text-white bg-indigo-500 hover:bg-indigo-600 px-3 py-1.5 rounded-full shadow-sm">Take</button></div>`; } } }); if (dueCount > 0) { badge.classList.remove('hidden'); if(panel.innerHTML === '') panel.innerHTML = '<div class="text-xs text-slate-400 p-2">All caught up!</div>'; } else { badge.classList.add('hidden'); panel.innerHTML = '<div class="text-center text-sm font-medium text-slate-400 py-6">All meds taken!</div>'; } }
             
-            switchView(viewName) {
-                const dash = document.getElementById('view-dashboard');
-                const cal = document.getElementById('view-calendar');
-                const navDash = document.getElementById('nav-dashboard');
-                const navCal = document.getElementById('nav-calendar');
-                const activeClass = "bg-indigo-600 text-white shadow-md";
-                const inactiveClass = "text-slate-500 hover:bg-slate-50";
-                if (viewName === 'dashboard') {
-                    dash.classList.remove('hidden'); cal.classList.add('hidden');
-                    navDash.className = "flex items-center gap-2 px-5 py-3 rounded-full " + activeClass + " transition-all duration-300";
-                    navDash.querySelector('span').classList.remove('hidden','w-0','opacity-0');
-                    navCal.className = "flex items-center gap-2 px-5 py-3 rounded-full " + inactiveClass + " transition-all duration-300";
-                    navCal.querySelector('span').classList.add('hidden','w-0','opacity-0');
-                } else {
-                    dash.classList.add('hidden'); cal.classList.remove('hidden');
-                    navCal.className = "flex items-center gap-2 px-5 py-3 rounded-full " + activeClass + " transition-all duration-300";
-                    navCal.querySelector('span').classList.remove('hidden','w-0','opacity-0');
-                    navDash.className = "flex items-center gap-2 px-5 py-3 rounded-full " + inactiveClass + " transition-all duration-300";
-                    navDash.querySelector('span').classList.add('hidden','w-0','opacity-0');
-                    this.renderCalendar();
-                }
-            }
-
-            resizeCanvas() { this.confettiCanvas.width = window.innerWidth; this.confettiCanvas.height = window.innerHeight; }
-            fireConfetti() {
-                const particles = [];
-                const colors = ['#4f46e5', '#ec4899', '#10b981', '#f59e0b'];
-                for (let i = 0; i < 100; i++) particles.push({ x: window.innerWidth/2, y: window.innerHeight/2, vx: (Math.random()-0.5)*20, vy: (Math.random()-1)*20, size: Math.random()*8+4, color: colors[Math.floor(Math.random()*colors.length)], life: 100, gravity: 0.6 });
-                const animate = () => {
-                    this.ctx.clearRect(0,0,window.innerWidth,window.innerHeight);
-                    let active = false;
-                    particles.forEach(p => { if(p.life>0){ active=true; p.x+=p.vx; p.y+=p.vy; p.vy+=p.gravity; p.life--; p.size*=0.96; this.ctx.fillStyle=p.color; this.ctx.beginPath(); this.ctx.arc(p.x,p.y,p.size,0,Math.PI*2); this.ctx.fill(); } });
-                    if(active) requestAnimationFrame(animate);
-                };
-                animate();
-            }
-            triggerCelebration() {
-                const overlay = document.getElementById('celebration-overlay');
-                overlay.classList.remove('hidden');
-                setTimeout(() => overlay.classList.add('hidden'), 2500);
-                this.fireConfetti();
-            }
-            showToast(msg) {
-                const t = document.getElementById('toast');
-                document.getElementById('toast-msg').textContent = msg;
-                t.classList.remove('translate-y-20', 'opacity-0');
-                setTimeout(() => t.classList.add('translate-y-20', 'opacity-0'), 2500);
-            }
-            
-            // App Management
-            openAddMedModal() {
-                document.getElementById('new-med-name').value = '';
-                document.getElementById('new-med-schedule-type').value = 'daily';
-                document.getElementById('new-med-start-date').value = this.today;
-                document.getElementById('new-med-month-day').value = '';
-                document.querySelectorAll('.day-checkbox').forEach(cb => cb.checked = false);
-                this.toggleScheduleInputs();
-                this.selectedColor = 'blue';
-                this.renderColorPicker();
-                document.getElementById('add-med-modal').classList.remove('hidden');
-            }
-            saveNewMedication() {
-                const name = document.getElementById('new-med-name').value.trim();
-                const type = document.getElementById('new-med-schedule-type').value;
-                if (!name) return alert("Please enter a name");
-                let details = {};
-                if (type === 'alternate') details.startDate = document.getElementById('new-med-start-date').value;
-                else if (type === 'weekly') {
-                    const checkboxes = document.querySelectorAll('.day-checkbox:checked');
-                    if (checkboxes.length === 0) return alert("Select at least one day");
-                    details.days = Array.from(checkboxes).map(cb => parseInt(cb.value));
-                }
-                else if (type === 'monthly') {
-                    const dayVal = document.getElementById('new-med-month-day').value;
-                    if(!dayVal || dayVal < 1 || dayVal > 31) return alert("Please enter a valid day (1-31)");
-                    details.dayOfMonth = parseInt(dayVal);
-                }
-                this.state.medications.push({ id: 'med_'+Date.now(), name, color: this.selectedColor, schedule: type, scheduleDetails: details });
-                this.saveData();
-                document.getElementById('add-med-modal').classList.add('hidden');
-                this.showToast("Added!");
-            }
-            deleteMedication(id) { 
-                this.showConfirm("Archive this medication? History will be kept.", () => {
-                    // Soft Delete: Mark as deleted instead of filtering out
-                    const medIndex = this.state.medications.findIndex(m => m.id === id);
-                    if (medIndex !== -1) {
-                        this.state.medications[medIndex].deleted = true;
-                        this.saveData();
-                    }
-                });
-            }
+            openAddMedModal() { document.getElementById('new-med-name').value = ''; document.getElementById('new-med-schedule-type').value = 'daily'; document.getElementById('new-med-start-date').value = this.today; document.getElementById('new-med-month-day').value = ''; document.querySelectorAll('.day-checkbox').forEach(cb => cb.checked = false); this.toggleScheduleInputs(); this.selectedColor = 'blue'; this.renderColorPicker(); document.getElementById('add-med-modal').classList.remove('hidden'); }
+            saveNewMedication() { const name = document.getElementById('new-med-name').value.trim(); const type = document.getElementById('new-med-schedule-type').value; if (!name) return alert("Please enter a name"); let details = {}; if (type === 'alternate') details.startDate = document.getElementById('new-med-start-date').value; else if (type === 'weekly') { const checkboxes = document.querySelectorAll('.day-checkbox:checked'); if (checkboxes.length === 0) return alert("Select at least one day"); details.days = Array.from(checkboxes).map(cb => parseInt(cb.value)); } else if (type === 'monthly') { const dayVal = document.getElementById('new-med-month-day').value; if(!dayVal || dayVal < 1 || dayVal > 31) return alert("Please enter a valid day (1-31)"); details.dayOfMonth = parseInt(dayVal); } this.state.medications.push({ id: 'med_'+Date.now(), name, color: this.selectedColor, schedule: type, scheduleDetails: details }); this.saveData(); document.getElementById('add-med-modal').classList.add('hidden'); this.showToast("Added!"); }
+            deleteMedication(id) { this.showConfirm("Archive this medication? History will be kept.", () => { const medIndex = this.state.medications.findIndex(m => m.id === id); if (medIndex !== -1) { this.state.medications[medIndex].deleted = true; this.saveData(); } }); }
             exportJSON() { const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(this.state)); const node = document.createElement('a'); node.setAttribute("href", dataStr); node.setAttribute("download", "med_tracker_backup.json"); document.body.appendChild(node); node.click(); node.remove(); }
-            exportCSV() {
-                let csv = "Date,Medication,Status\n";
-                Object.keys(this.state.logs).sort().reverse().forEach(d => {
-                    Object.keys(this.state.logs[d]).forEach(id => {
-                        const m = this.state.medications.find(x => x.id === id);
-                        csv += `${d},${m ? m.name : 'Unknown'},Taken\n`;
-                    });
-                });
-                const node = document.createElement('a'); node.setAttribute("href", "data:text/csv;charset=utf-8," + encodeURIComponent(csv)); node.setAttribute("download", "med_history.csv"); document.body.appendChild(node); node.click(); node.remove();
-            }
-            importData(input) {
-                const file = input.files[0]; if(!file) return;
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    try {
-                        const json = JSON.parse(e.target.result);
-                        if(json.medications) { this.state = json; if(!json.version || json.version < 4) this.migrateToV4(json); this.saveData(); this.showToast("Restored!"); this.toggleSettings(); }
-                    } catch { alert("Invalid"); }
-                };
-                reader.readAsText(file);
-            }
-            clearAllData() { 
-                this.showConfirm("Reset everything? This cannot be undone.", () => {
-                    localStorage.removeItem('medTrackerData'); 
-                    location.reload(); 
-                });
-            }
-            // Calendar Export Logic
-            generateCalendar() {
-                let icsContent = "BEGIN:VCALENDAR\nVERSION:2.0\nPRODID:-//MedTracker//App//EN\n";
-                const currentUrl = window.location.href;
-                // Only export active meds
-                this.state.medications.filter(m => !m.deleted).forEach(med => {
-                    let start = new Date(); start.setHours(9, 0, 0, 0); let rrule = ""; let isValid = true;
-                    if (med.schedule === 'daily') rrule = "FREQ=DAILY";
-                    else if (med.schedule === 'weekly') { const daysMap = ['SU', 'MO', 'TU', 'WE', 'TH', 'FR', 'SA']; const selectedDays = med.scheduleDetails.days.map(d => daysMap[d]).join(','); rrule = `FREQ=WEEKLY;BYDAY=${selectedDays}`; }
-                    else if (med.schedule === 'monthly') { const dayOfMonth = med.scheduleDetails.dayOfMonth; start.setDate(dayOfMonth); if (start < new Date()) start.setMonth(start.getMonth() + 1); rrule = `FREQ=MONTHLY;BYMONTHDAY=${dayOfMonth}`; }
-                    else if (med.schedule === 'alternate') { const genesisStr = med.scheduleDetails.startDate; if (!genesisStr) { isValid = false; } else { const genesis = new Date(genesisStr + 'T00:00:00'); const todayStr = this.getLocalDateString(); const checkDate = new Date(todayStr + 'T00:00:00'); const diffTime = checkDate - genesis; const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24)); if (diffDays % 2 !== 0) start.setDate(start.getDate() + 1); rrule = "FREQ=DAILY;INTERVAL=2"; } }
-                    if (isValid) { const pad = (n) => n < 10 ? '0' + n : n; const dateString = `${start.getFullYear()}${pad(start.getMonth() + 1)}${pad(start.getDate())}T090000`; icsContent += "BEGIN:VEVENT\n"; icsContent += `UID:${med.id}@medtracker.local\n`; icsContent += `DTSTART:${dateString}\n`; if(rrule) icsContent += `RRULE:${rrule}\n`; icsContent += `SUMMARY:Take ${med.name}\n`; icsContent += `DESCRIPTION:Log dose here: ${currentUrl}\n`; icsContent += "BEGIN:VALARM\nTRIGGER:-PT0M\nACTION:DISPLAY\nDESCRIPTION:Reminder\nEND:VALARM\n"; icsContent += "END:VEVENT\n"; }
-                });
-                icsContent += "END:VCALENDAR";
-                const blob = new Blob([icsContent], { type: 'text/calendar' });
-                const url = window.URL.createObjectURL(blob);
-                const a = document.createElement('a'); a.href = url; a.download = "med_schedule.ics"; document.body.appendChild(a); a.click(); document.body.removeChild(a); window.URL.revokeObjectURL(url); this.showToast("Calendar file generated!");
-            }
-            checkBrowserPermission() { const icon = document.getElementById('browser-notif-icon'); if (!("Notification" in window)) { icon.className = "ph-bold ph-x-circle text-2xl text-red-300"; return; } if (Notification.permission === "granted") icon.className = "ph-fill ph-toggle-right text-2xl text-green-500"; else if (Notification.permission === "denied") icon.className = "ph-bold ph-toggle-left text-2xl text-red-300"; else icon.className = "ph-bold ph-toggle-left text-2xl text-slate-300"; }
-            requestBrowserNotifications() { if (!("Notification" in window)) return alert("This browser does not support notifications."); Notification.requestPermission().then(permission => { this.checkBrowserPermission(); if (permission === "granted") { new Notification("Notifications Enabled", { body: "You will receive alerts when the app is open.", icon: "https://unpkg.com/@phosphor-icons/core@2.0.0/assets/fill/pill-fill.svg" }); this.scheduleLocalNotification(); } }); }
-            scheduleLocalNotification() { if (Notification.permission !== "granted") return; }
-            showConfirm(msg, callback) {
-                document.getElementById('confirm-msg').textContent = msg;
-                this.pendingAction = callback;
-                document.getElementById('confirm-modal').classList.remove('hidden');
-            }
-            closeConfirm() {
-                document.getElementById('confirm-modal').classList.add('hidden');
-                this.pendingAction = null;
-            }
-            confirmAction() {
-                if (this.pendingAction) this.pendingAction();
-                this.closeConfirm();
-            }
+            importData(input) { const file = input.files[0]; if(!file) return; const reader = new FileReader(); reader.onload = (e) => { try { const json = JSON.parse(e.target.result); if(json.medications) { this.state = json; if(!json.version || json.version < 6) this.migrateToV4(json); this.saveData(); this.showToast("Restored!"); this.toggleSettings(); } } catch { alert("Invalid"); } }; reader.readAsText(file); }
+            clearAllData() { this.showConfirm("Reset everything? This cannot be undone.", () => { localStorage.removeItem('medTrackerData'); location.reload(); }); }
+            generateMockData() { this.showConfirm("Overwrite with 100 days of test data?", () => { this.state.logs = {}; this.state.weightLogs = {}; this.state.noteLogs = {}; const meds = (this.state.medications || []).filter(m => !m.deleted); const today = new Date(); for (let i = 0; i < 100; i++) { const d = new Date(); d.setDate(today.getDate() - i); const dateStr = new Date(d.getTime() - d.getTimezoneOffset()*60000).toISOString().split('T')[0]; this.state.logs[dateStr] = {}; meds.forEach(med => { if (this.isDue(med, dateStr)) { if (Math.random() > 0.1) this.state.logs[dateStr][med.id] = { timestamp: Date.now(), value: true }; } }); if (Object.keys(this.state.logs[dateStr]).length === 0) delete this.state.logs[dateStr]; if (Math.random() > 0.7) this.state.weightLogs[dateStr] = (70 + Math.random() * 2).toFixed(1); if (Math.random() > 0.8) this.state.noteLogs[dateStr] = "Feeling great today!"; } this.saveData(); this.showToast("Test data generated"); this.toggleSettings(); }); }
+            generateCalendar() { let icsContent = "BEGIN:VCALENDAR\nVERSION:2.0\nPRODID:-//MedTracker//App//EN\n"; const currentUrl = window.location.href; (this.state.medications || []).filter(m => !m.deleted).forEach(med => { let start = new Date(); start.setHours(9, 0, 0, 0); let rrule = ""; let isValid = true; if (med.schedule === 'daily') rrule = "FREQ=DAILY"; else if (med.schedule === 'weekly') { const daysMap = ['SU', 'MO', 'TU', 'WE', 'TH', 'FR', 'SA']; const selectedDays = med.scheduleDetails.days.map(d => daysMap[d]).join(','); rrule = `FREQ=WEEKLY;BYDAY=${selectedDays}`; } else if (med.schedule === 'monthly') { const dayOfMonth = med.scheduleDetails.dayOfMonth; start.setDate(dayOfMonth); if (start < new Date()) start.setMonth(start.getMonth() + 1); rrule = `FREQ=MONTHLY;BYMONTHDAY=${dayOfMonth}`; } else if (med.schedule === 'alternate') { const genesisStr = med.scheduleDetails.startDate; if (!genesisStr) { isValid = false; } else { const genesis = new Date(genesisStr + 'T00:00:00'); const todayStr = this.getLocalDateString(); const checkDate = new Date(todayStr + 'T00:00:00'); const diffTime = checkDate - genesis; const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24)); if (diffDays % 2 !== 0) start.setDate(start.getDate() + 1); rrule = "FREQ=DAILY;INTERVAL=2"; } } if (isValid) { const pad = (n) => n < 10 ? '0' + n : n; const dateString = `${start.getFullYear()}${pad(start.getMonth() + 1)}${pad(start.getDate())}T090000`; icsContent += "BEGIN:VEVENT\n"; icsContent += `UID:${med.id}@medtracker.local\n`; icsContent += `DTSTART:${dateString}\n`; if(rrule) icsContent += `RRULE:${rrule}\n`; icsContent += `SUMMARY:Take ${med.name}\n`; icsContent += `DESCRIPTION:Log dose here: ${currentUrl}\n`; icsContent += "BEGIN:VALARM\nTRIGGER:-PT0M\nACTION:DISPLAY\nDESCRIPTION:Reminder\nEND:VALARM\n"; icsContent += "END:VEVENT\n"; } }); icsContent += "END:VCALENDAR"; const blob = new Blob([icsContent], { type: 'text/calendar' }); const url = window.URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = "med_schedule.ics"; document.body.appendChild(a); a.click(); document.body.removeChild(a); window.URL.revokeObjectURL(url); this.showToast("Calendar file generated!"); }
+            checkBrowserPermission() { const icon = document.getElementById('browser-notif-icon'); if(!icon) return; if (!("Notification" in window)) { icon.className = "ph-bold ph-x-circle text-2xl text-red-300"; return; } if (Notification.permission === "granted") icon.className = "ph-fill ph-toggle-right text-2xl text-green-500"; else if (Notification.permission === "denied") icon.className = "ph-bold ph-toggle-left text-2xl text-red-300"; else icon.className = "ph-bold ph-toggle-left text-2xl text-slate-300"; }
+            requestBrowserNotifications() { if (!("Notification" in window)) return alert("This browser does not support notifications."); Notification.requestPermission().then(permission => { this.checkBrowserPermission(); if (permission === "granted") { new Notification("Notifications Enabled", { body: "You will receive alerts when the app is open.", icon: "https://unpkg.com/@phosphor-icons/core@2.0.0/assets/fill/pill-fill.svg" }); } }); }
+            showConfirm(msg, callback) { document.getElementById('confirm-msg').textContent = msg; this.pendingAction = callback; document.getElementById('confirm-modal').classList.remove('hidden'); }
+            closeConfirm() { document.getElementById('confirm-modal').classList.add('hidden'); this.pendingAction = null; }
+            confirmAction() { if (this.pendingAction) this.pendingAction(); this.closeConfirm(); }
         }
-        window.app = new MedTracker();
+        document.addEventListener('DOMContentLoaded', () => {
+            window.app = new MedTracker();
+        });
     </script>
 </body>
 </html>
