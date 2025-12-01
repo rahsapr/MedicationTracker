@@ -63,6 +63,11 @@
         }
         .animate-pop-in { animation: popIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; }
 
+        @keyframes fadeIn {
+            from { opacity: 0; } to { opacity: 1; }
+        }
+        .animate-fade-in { animation: fadeIn 0.3s ease-out forwards; }
+
         .btn-press { transition: transform 0.1s cubic-bezier(0.4, 0, 0.2, 1); }
         .btn-press:active { transform: scale(0.96); }
 
@@ -117,10 +122,6 @@
                 <i class="ph-bold ph-bell text-xl"></i>
                 <span id="notif-badge" class="absolute top-1 right-1 w-2.5 h-2.5 bg-red-500 border-2 border-white rounded-full hidden"></span>
             </button>
-            <!-- Help Icon -->
-            <button onclick="window.app.switchView('help')" class="p-2.5 rounded-full bg-white/50 hover:bg-white border border-white/60 shadow-sm text-slate-600 transition-all btn-press">
-                <i class="ph-bold ph-question text-xl"></i>
-            </button>
             <!-- Settings -->
             <button onclick="window.app.toggleSettings()" class="p-2.5 rounded-full bg-white/50 hover:bg-white border border-white/60 shadow-sm text-slate-600 transition-all btn-press">
                 <i class="ph-bold ph-gear text-xl"></i>
@@ -140,37 +141,37 @@
     <!-- Main Content Area -->
     <main class="flex-1 overflow-hidden relative z-0">
         
-        <!-- HELP VIEW (ONBOARDING) -->
+        <!-- TAB 1: HELP / HOME / GUIDE -->
         <div id="view-help" class="h-full overflow-y-auto no-scrollbar p-5 pb-32 hidden max-w-md mx-auto transition-opacity duration-200">
             <div class="glass-card rounded-3xl p-8 shadow-lg text-center mb-6">
                 <div class="w-24 h-24 bg-indigo-100 rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner animate-pulse">
-                    <i class="ph-fill ph-hand-waving text-5xl text-indigo-600"></i>
+                    <i class="ph-fill ph-house text-5xl text-indigo-600"></i>
                 </div>
-                <h2 class="text-3xl font-black text-slate-800 mb-4 tracking-tight">Welcome!</h2>
-                <p class="text-slate-500 mb-8 leading-relaxed">MedTracker is your private, offline-first companion for better health.</p>
+                <h2 class="text-3xl font-black text-slate-800 mb-4 tracking-tight">Start Here</h2>
+                <p class="text-slate-500 mb-8 leading-relaxed">Welcome to your personal health companion.</p>
                 
                 <div class="space-y-6 text-left mb-10">
                     <div class="flex items-start gap-4">
-                        <div class="w-10 h-10 rounded-2xl bg-indigo-50 flex items-center justify-center text-indigo-600 shrink-0 shadow-sm"><i class="ph-bold ph-check-circle text-xl"></i></div>
-                        <div><h4 class="font-bold text-slate-700">Track Medications</h4><p class="text-sm text-slate-400">Log daily doses, see patterns, and build streaks.</p></div>
+                        <div class="w-12 h-12 rounded-2xl bg-indigo-50 flex items-center justify-center text-indigo-600 shrink-0 shadow-sm"><i class="ph-bold ph-pill text-2xl"></i></div>
+                        <div><h4 class="font-bold text-slate-700">Medication Tab</h4><p class="text-sm text-slate-400">Your daily checklist. Tap pills to log them. Add new ones easily.</p></div>
                     </div>
                     <div class="flex items-start gap-4">
-                        <div class="w-10 h-10 rounded-2xl bg-purple-50 flex items-center justify-center text-purple-600 shrink-0 shadow-sm"><i class="ph-bold ph-notebook text-xl"></i></div>
-                        <div><h4 class="font-bold text-slate-700">Journal & Weight</h4><p class="text-sm text-slate-400">Monitor your weight trends and keep a daily health diary.</p></div>
+                        <div class="w-12 h-12 rounded-2xl bg-purple-50 flex items-center justify-center text-purple-600 shrink-0 shadow-sm"><i class="ph-bold ph-scales text-2xl"></i></div>
+                        <div><h4 class="font-bold text-slate-700">Health Tab</h4><p class="text-sm text-slate-400">Track weight trends, BMI, and keep a daily journal.</p></div>
                     </div>
                     <div class="flex items-start gap-4">
-                        <div class="w-10 h-10 rounded-2xl bg-green-50 flex items-center justify-center text-green-600 shrink-0 shadow-sm"><i class="ph-bold ph-shield-check text-xl"></i></div>
-                        <div><h4 class="font-bold text-slate-700">100% Private</h4><p class="text-sm text-slate-400">Data stays on this device. No servers, no accounts.</p></div>
+                        <div class="w-12 h-12 rounded-2xl bg-blue-50 flex items-center justify-center text-blue-600 shrink-0 shadow-sm"><i class="ph-bold ph-calendar-blank text-2xl"></i></div>
+                        <div><h4 class="font-bold text-slate-700">Calendar Tab</h4><p class="text-sm text-slate-400">View your history. Tap any date to see what you took.</p></div>
                     </div>
                 </div>
 
                 <button onclick="window.app.finishOnboarding()" class="w-full py-4 bg-indigo-600 text-white rounded-2xl font-bold shadow-xl shadow-indigo-200 hover:bg-indigo-700 transition-all btn-press flex items-center justify-center gap-2 text-lg">
-                    Let's Go! <i class="ph-bold ph-arrow-right"></i>
+                    Open Dashboard <i class="ph-bold ph-arrow-right"></i>
                 </button>
             </div>
         </div>
 
-        <!-- DASHBOARD VIEW -->
+        <!-- TAB 2: DASHBOARD (MEDS) -->
         <div id="view-dashboard" class="h-full overflow-y-auto no-scrollbar p-5 pb-32 space-y-6 max-w-md mx-auto transition-opacity duration-200">
             
             <!-- Missed Dose Alert Area -->
@@ -200,26 +201,10 @@
             <div class="space-y-2">
                 <div id="medication-cards-container" class="space-y-4"></div>
             </div>
-
-            <!-- History Log -->
-            <div class="mt-8">
-                <div class="flex justify-between items-center mb-3 pl-1">
-                    <h3 class="text-sm font-bold text-slate-400 uppercase tracking-wider">History</h3>
-                    <span id="page-indicator" class="text-[10px] font-bold text-slate-500 bg-white border border-slate-200 shadow-sm px-2 py-1 rounded-full">Page 1</span>
-                </div>
-                <div class="glass-card rounded-2xl shadow-sm overflow-hidden flex flex-col max-h-[300px]">
-                    <div id="history-list" class="overflow-y-auto custom-scrollbar p-1"></div>
-                </div>
-                <div class="flex justify-center items-center gap-4 mt-4">
-                    <button onclick="window.app.changeHistoryPage(-1)" id="btn-prev-page" class="text-xs font-bold text-slate-500 disabled:opacity-30 flex items-center gap-1 bg-white px-3 py-2 rounded-full shadow-sm border border-slate-100 btn-press disabled:cursor-not-allowed" disabled>Newer</button>
-                    <button onclick="window.app.changeHistoryPage(1)" id="btn-next-page" class="text-xs font-bold text-slate-500 disabled:opacity-30 flex items-center gap-1 bg-white px-3 py-2 rounded-full shadow-sm border border-slate-100 btn-press disabled:cursor-not-allowed" disabled>Older</button>
-                </div>
-            </div>
         </div>
 
-        <!-- JOURNAL / HEALTH VIEW -->
+        <!-- TAB 3: JOURNAL / HEALTH VIEW -->
         <div id="view-journal" class="h-full overflow-y-auto no-scrollbar p-5 pb-32 hidden max-w-md mx-auto transition-opacity duration-200">
-            <!-- (Same as before) -->
             <div class="glass-card rounded-3xl p-5 mb-6 shadow-sm">
                 <div class="flex justify-between items-start mb-4">
                     <div>
@@ -229,6 +214,7 @@
                     <div id="bmi-badge" class="hidden px-2.5 py-1 rounded-lg text-xs font-bold bg-slate-100 text-slate-500">BMI: --</div>
                 </div>
 
+                <!-- Chart Controls -->
                 <div class="flex justify-end gap-1 mb-2">
                     <button onclick="window.app.setChartRange('1m')" class="chart-range-btn text-[10px] font-bold px-2 py-1 rounded bg-slate-100 text-slate-500 hover:bg-indigo-100 hover:text-indigo-600 transition-colors" data-range="1m">1M</button>
                     <button onclick="window.app.setChartRange('3m')" class="chart-range-btn text-[10px] font-bold px-2 py-1 rounded bg-slate-100 text-slate-500 hover:bg-indigo-100 hover:text-indigo-600 transition-colors" data-range="3m">3M</button>
@@ -237,11 +223,13 @@
                     <button onclick="window.app.setChartRange('all')" class="chart-range-btn text-[10px] font-bold px-2 py-1 rounded bg-indigo-100 text-indigo-600 transition-colors" data-range="all">All</button>
                 </div>
 
+                <!-- Chart -->
                 <div class="relative w-full h-48 bg-slate-50 rounded-xl mb-4 overflow-hidden border border-slate-100">
                     <canvas id="weight-chart" class="w-full h-full"></canvas>
                     <div id="chart-tooltip" class="absolute top-0 left-0 bg-slate-800 text-white text-[10px] px-2 py-1 rounded opacity-0 pointer-events-none transition-opacity z-10 whitespace-nowrap"></div>
                 </div>
 
+                <!-- Inputs -->
                 <div class="flex gap-2 mb-2">
                      <input type="date" id="journal-date" class="w-1/3 p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-600 focus:outline-none" onchange="window.app.renderJournal()">
                      <input type="number" id="weight-input" step="0.1" placeholder="0.0" class="flex-1 p-3 bg-slate-50 border border-slate-200 rounded-xl text-lg font-bold text-slate-700 focus:outline-none focus:border-indigo-500">
@@ -261,9 +249,8 @@
             <div id="journal-history-list" class="space-y-3"></div>
         </div>
 
-        <!-- CALENDAR VIEW -->
+        <!-- TAB 4: CALENDAR VIEW -->
         <div id="view-calendar" class="h-full overflow-y-auto no-scrollbar p-5 pb-32 hidden max-w-md mx-auto transition-opacity duration-200">
-            <!-- (Same as before) -->
             <div class="glass-card rounded-3xl shadow-sm p-5 mb-6">
                 <div class="flex justify-between items-center mb-6">
                     <button onclick="window.app.changeMonth(-1)" class="p-2 hover:bg-slate-100 rounded-full text-slate-600 transition-colors"><i class="ph-bold ph-caret-left text-lg"></i></button>
@@ -286,18 +273,47 @@
                     <div class="flex items-center gap-1.5"><div class="w-3 h-3 rounded-full bg-purple-100 border border-purple-200"></div><span class="text-[10px] font-bold text-slate-400">Weight</span></div>
                 </div>
             </div>
-            <p class="text-center text-xs font-medium text-slate-400 mb-6 bg-white/40 inline-block px-4 py-2 rounded-full mx-auto">Tap a date to view details</p>
+            
+            <div class="mt-8">
+                <div class="flex justify-between items-center mb-3 pl-1">
+                    <h3 class="text-sm font-bold text-slate-400 uppercase tracking-wider">History List</h3>
+                    <span id="page-indicator" class="text-[10px] font-bold text-slate-500 bg-white border border-slate-200 shadow-sm px-2 py-1 rounded-full">Page 1</span>
+                </div>
+                <div class="glass-card rounded-2xl shadow-sm overflow-hidden flex flex-col max-h-[300px]">
+                    <div id="history-list" class="overflow-y-auto custom-scrollbar p-1"></div>
+                </div>
+                <div class="flex justify-center items-center gap-4 mt-4">
+                    <button onclick="window.app.changeHistoryPage(-1)" id="btn-prev-page" class="text-xs font-bold text-slate-500 disabled:opacity-30 flex items-center gap-1 bg-white px-3 py-2 rounded-full shadow-sm border border-slate-100 btn-press disabled:cursor-not-allowed" disabled>Newer</button>
+                    <button onclick="window.app.changeHistoryPage(1)" id="btn-next-page" class="text-xs font-bold text-slate-500 disabled:opacity-30 flex items-center gap-1 bg-white px-3 py-2 rounded-full shadow-sm border border-slate-100 btn-press disabled:cursor-not-allowed" disabled>Older</button>
+                </div>
+            </div>
+            
         </div>
     </main>
 
     <!-- Floating Navigation -->
     <div class="fixed bottom-6 left-0 right-0 z-30 flex justify-center pointer-events-none">
         <nav class="glass-card shadow-2xl shadow-indigo-500/10 rounded-full px-2 py-1.5 flex gap-1 pointer-events-auto scale-100 transform transition-transform">
-            <button onclick="window.app.switchView('help')" id="nav-help" class="flex items-center gap-2 px-5 py-3 rounded-full text-slate-500 hover:bg-slate-50 transition-all duration-300"><i class="ph-bold ph-question text-xl"></i></button>
-            <button onclick="window.app.switchView('dashboard')" id="nav-dashboard" class="flex items-center gap-2 px-5 py-3 rounded-full bg-indigo-600 text-white shadow-md transition-all duration-300"><i class="ph-fill ph-house text-xl"></i></button>
-            <button onclick="window.app.switchView('journal')" id="nav-journal" class="flex items-center gap-2 px-5 py-3 rounded-full text-slate-500 hover:bg-slate-50 transition-all duration-300"><i class="ph-bold ph-notebook text-xl"></i></button>
+            <button onclick="window.app.switchView('help')" id="nav-help" class="flex items-center gap-2 px-5 py-3 rounded-full text-slate-500 hover:bg-slate-50 transition-all duration-300"><i class="ph-bold ph-house text-xl"></i></button>
+            <button onclick="window.app.switchView('dashboard')" id="nav-dashboard" class="flex items-center gap-2 px-5 py-3 rounded-full bg-indigo-600 text-white shadow-md transition-all duration-300"><i class="ph-fill ph-pill text-xl"></i></button>
+            <button onclick="window.app.switchView('journal')" id="nav-journal" class="flex items-center gap-2 px-5 py-3 rounded-full text-slate-500 hover:bg-slate-50 transition-all duration-300"><i class="ph-bold ph-scales text-xl"></i></button>
             <button onclick="window.app.switchView('calendar')" id="nav-calendar" class="flex items-center gap-2 px-5 py-3 rounded-full text-slate-500 hover:bg-slate-50 transition-all duration-300"><i class="ph-bold ph-calendar-blank text-xl"></i></button>
         </nav>
+    </div>
+    
+    <!-- TUTORIAL OVERLAY -->
+    <div id="tutorial-overlay" class="fixed inset-0 z-[200] hidden flex flex-col justify-end pb-28 px-6 bg-slate-900/70 backdrop-blur-sm animate-fade-in">
+        <div class="bg-white p-6 rounded-3xl shadow-2xl relative overflow-hidden ring-2 ring-white/50 animate-pop-in">
+            <div class="absolute top-0 right-0 w-32 h-32 bg-indigo-100 rounded-full -translate-y-1/2 translate-x-1/3 blur-3xl"></div>
+            <div class="relative z-10">
+                <div class="w-12 h-12 bg-indigo-50 rounded-2xl flex items-center justify-center text-indigo-600 mb-4 text-2xl shadow-sm">
+                    <i id="tutorial-icon" class="ph-fill ph-info"></i>
+                </div>
+                <h3 id="tutorial-title" class="text-xl font-bold text-slate-800 mb-2">Title</h3>
+                <p id="tutorial-text" class="text-sm text-slate-500 leading-relaxed mb-6">Description</p>
+                <button onclick="window.app.dismissTutorial()" class="w-full py-3.5 bg-indigo-600 text-white rounded-xl font-bold shadow-lg shadow-indigo-200 hover:bg-indigo-700 btn-press">Got it!</button>
+            </div>
+        </div>
     </div>
 
     <!-- Modals -->
@@ -341,7 +357,7 @@
                 <!-- Data -->
                 <section class="border-t border-slate-100 pt-6"><h3 class="font-bold text-lg text-slate-800 mb-3">Data</h3><div class="grid grid-cols-1 gap-3"><div class="grid grid-cols-2 gap-3"><button onclick="window.app.exportCSV()" class="flex items-center justify-center gap-2 p-3.5 bg-green-50 text-green-700 hover:bg-green-100 border border-green-100 rounded-xl text-sm font-bold btn-press transition-colors"><i class="ph-bold ph-file-csv"></i> Export CSV</button><button onclick="window.app.exportJSON()" class="flex items-center justify-center gap-2 p-3.5 bg-slate-50 hover:bg-slate-100 border border-slate-100 rounded-xl text-sm font-bold text-slate-600 btn-press transition-colors"><i class="ph-bold ph-download-simple"></i> Backup</button></div><label class="flex items-center justify-center gap-2 p-3.5 bg-slate-50 rounded-xl text-sm font-bold text-slate-600 btn-press cursor-pointer hover:bg-slate-100 border border-slate-100 transition-colors"><i class="ph-bold ph-upload-simple"></i> Restore Backup<input type="file" id="import-file" class="hidden" accept=".json" onchange="window.app.importData(this)"></label></div></section>
                 <!-- Danger -->
-                <section class="pt-6 border-t border-slate-100"><button onclick="window.app.generateMockData()" class="w-full mb-3 p-3.5 text-blue-600 bg-blue-50 hover:bg-blue-100 border border-blue-100 rounded-xl text-sm font-bold transition-colors btn-press"><i class="ph-bold ph-flask"></i> Generate 100 Days Data</button><button onclick="window.app.clearAllData()" class="w-full p-3.5 text-red-600 bg-red-50 hover:bg-red-100 border border-red-100 rounded-xl text-sm font-bold transition-colors btn-press">Reset App Data</button><p class="text-center text-[10px] font-bold text-slate-300 mt-4 uppercase tracking-widest">v7.4.0 • Help Tab</p></section>
+                <section class="pt-6 border-t border-slate-100"><button onclick="window.app.generateMockData()" class="w-full mb-3 p-3.5 text-blue-600 bg-blue-50 hover:bg-blue-100 border border-blue-100 rounded-xl text-sm font-bold transition-colors btn-press"><i class="ph-bold ph-flask"></i> Generate 100 Days Data</button><button onclick="window.app.clearAllData()" class="w-full p-3.5 text-red-600 bg-red-50 hover:bg-red-100 border border-red-100 rounded-xl text-sm font-bold transition-colors btn-press">Reset App Data</button><p class="text-center text-[10px] font-bold text-slate-300 mt-4 uppercase tracking-widest">v8.0.0 • Onboarding</p></section>
             </div>
         </div>
     </div>
@@ -381,24 +397,22 @@
     <script>
         class MedTracker {
             constructor() {
-                // Date Setup (Executed First)
                 const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
                 document.getElementById('current-date-display').textContent = new Date().toLocaleDateString('en-US', options);
-
                 this.today = this.getLocalDateString();
-                const y = new Date(); y.setDate(y.getDate()-1);
-                const yesterday = new Date(y.getTime() - y.getTimezoneOffset()*60000).toISOString().split('T')[0];
                 this.state = {
-                    version: 7, logs: {}, bestStreak: 0, weightLogs: {}, noteLogs: {}, userProfile: { name: "", height: "", unit: "kg" },
-                    medications: [] // CLEAN SLATE
+                    version: 7, logs: {}, bestStreak: 0, weightLogs: {}, noteLogs: {}, 
+                    userProfile: { name: "", height: "", unit: "kg" },
+                    medications: [],
+                    tutorialsSeen: { dashboard: false, journal: false, calendar: false } 
                 };
                 this.currentCalendarDate = new Date();
                 this.historyPage = 0; this.ITEMS_PER_PAGE = 30;
                 this.journalPage = 0; this.chartRange = 'all';
                 this.confettiCanvas = document.getElementById('confetti-canvas'); this.ctx = this.confettiCanvas.getContext('2d');
                 this.colors = [ { name: 'blue', bg: 'bg-blue-500', text: 'text-blue-600', ring: 'ring-blue-500' }, { name: 'teal', bg: 'bg-teal-500', text: 'text-teal-600', ring: 'ring-teal-500' }, { name: 'red', bg: 'bg-red-500', text: 'text-red-600', ring: 'ring-red-500' }, { name: 'amber', bg: 'bg-amber-500', text: 'text-amber-600', ring: 'ring-amber-500' }, { name: 'purple', bg: 'bg-purple-500', text: 'text-purple-600', ring: 'ring-purple-500' }, { name: 'emerald', bg: 'bg-emerald-500', text: 'text-emerald-600', ring: 'ring-emerald-500' }, { name: 'indigo', bg: 'bg-indigo-500', text: 'text-indigo-600', ring: 'ring-indigo-500' }, { name: 'rose', bg: 'bg-rose-500', text: 'text-rose-600', ring: 'ring-rose-500' } ];
-                this.selectedColor = 'blue'; this.pendingAction = null; 
-                this.missedAlertDismissed = false;
+                this.selectedColor = 'blue'; this.pendingAction = null; this.missedAlertDismissed = false;
+                this.currentTutorialView = null;
             }
 
             init() {
@@ -408,436 +422,44 @@
                     this.renderColorPicker(); this.initWeekCheckboxes(); this.resizeCanvas();
                     window.addEventListener('resize', () => this.resizeCanvas());
                     
-                    // ONBOARDING CHECK
                     const hasSeenHelp = localStorage.getItem('medTracker_hasSeenHelp');
-                    if (!hasSeenHelp) {
-                        this.switchView('help');
-                    } else {
-                        this.switchView('dashboard');
-                    }
+                    if (!hasSeenHelp) { this.switchView('help'); } else { this.switchView('dashboard'); }
 
                     this.setupInputs();
                     document.getElementById('confirm-yes-btn').onclick = () => this.confirmAction();
                     this.checkBrowserPermission();
                 } catch (e) { console.error(e); if (confirm("Error loading data. Reset?")) { localStorage.removeItem('medTrackerData'); location.reload(); } }
             }
-            setupInputs() { document.getElementById('new-med-start-date').value = this.today; const journalDateInput = document.getElementById('journal-date'); if(journalDateInput) journalDateInput.value = this.today; }
-            getLocalDateString() { const d = new Date(); return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().split('T')[0]; }
-            loadData() {
-                const saved = localStorage.getItem('medTrackerData');
-                if (saved) { try { const parsed = JSON.parse(saved); if(!parsed.version || parsed.version < 6) this.state = { ...this.state, ...parsed, version: 6, weightLogs: parsed.weightLogs || {}, noteLogs: parsed.noteLogs || {}, userProfile: parsed.userProfile || { name:"", height:"", unit:"kg" } }; else this.state = { ...this.state, ...parsed }; } catch (e) { console.error(e); } }
-                document.getElementById('settings-name').value = this.state.userProfile.name || ""; document.getElementById('settings-height').value = this.state.userProfile.height || ""; document.getElementById('settings-unit').value = this.state.userProfile.unit || "kg";
-            }
-            saveData() { localStorage.setItem('medTrackerData', JSON.stringify(this.state)); this.renderUI(); }
-            saveProfile() { this.state.userProfile.name = document.getElementById('settings-name').value; this.state.userProfile.height = document.getElementById('settings-height').value; this.state.userProfile.unit = document.getElementById('settings-unit').value; this.saveData(); }
-
-            // --- Help / Onboarding ---
-            // 'showHelp' now just switches to the help tab view
-            showHelp() { 
-                this.switchView('help');
-            }
             
-            finishOnboarding() {
-                localStorage.setItem('medTracker_hasSeenHelp', 'true');
-                this.switchView('dashboard');
-            }
-
-            // --- Missed Dose Logic ---
-            checkMissedYesterday() {
-                if (this.missedAlertDismissed) return null;
-                const y = new Date(); y.setDate(y.getDate() - 1);
-                const yesterdayStr = new Date(y.getTime() - y.getTimezoneOffset() * 60000).toISOString().split('T')[0];
-                const missed = [];
-                (this.state.medications || []).filter(m => !m.deleted).forEach(med => {
-                    if (this.isDue(med, yesterdayStr)) {
-                        const taken = this.state.logs[yesterdayStr] && this.state.logs[yesterdayStr][med.id];
-                        if (!taken) missed.push(med);
-                    }
-                });
-                return missed.length > 0 ? { date: yesterdayStr, meds: missed } : null;
-            }
-            logMissedDose(date, medId) {
-                if (!this.state.logs[date]) this.state.logs[date] = {};
-                this.state.logs[date][medId] = { timestamp: Date.now(), value: true };
-                this.saveData();
-            }
-            dismissMissedAlert() {
-                this.missedAlertDismissed = true;
-                this.renderUI();
-            }
-
-            isDue(med, dateStr) {
-                if (med.deleted) return false;
-                if (med.schedule === 'daily') return true;
-                const checkDate = new Date(dateStr + 'T00:00:00');
-                if (med.schedule === 'weekly') { const days = med.scheduleDetails.days || []; const dayOfWeek = checkDate.getDay(); return days.includes(dayOfWeek); }
-                if (med.schedule === 'monthly') { const targetDay = parseInt(med.scheduleDetails.dayOfMonth); return checkDate.getDate() === targetDay; }
-                if (med.schedule === 'alternate') { if (!med.scheduleDetails.startDate) return true; const start = new Date(med.scheduleDetails.startDate + 'T00:00:00'); const diffTime = checkDate - start; const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24)); return diffDays >= 0 && diffDays % 2 === 0; }
-                return false;
-            }
-            checkStatus(med) { const isTaken = this.state.logs[this.today] && this.state.logs[this.today][med.id]; const dueToday = this.isDue(med, this.today); if (isTaken) return { status: 'taken', text: 'Taken' }; if (dueToday) return { status: 'due', text: 'Due Today' }; if (med.schedule === 'daily') return { status: 'neutral', text: 'Daily' }; return { status: 'skip', text: 'Rest Day' }; }
-            calculateStats() {
-                const activeMeds = (this.state.medications || []).filter(m => !m.deleted);
-                if (activeMeds.length === 0) return { streak: 0, bestStreak: this.state.bestStreak, adherence: 0 };
-                let streak = 0; let checkDate = new Date();
-                const todayStatus = this.getDayCompletionStatus(this.today);
-                if (!todayStatus.complete) checkDate.setDate(checkDate.getDate() - 1);
-                let safetyLimit = 1000; 
-                while (safetyLimit-- > 0) {
-                    const dateStr = checkDate.toISOString().split('T')[0];
-                    const status = this.getDayCompletionStatus(dateStr);
-                    if (status.required === 0) {} else if (status.complete) streak++; else break;
-                    checkDate.setDate(checkDate.getDate() - 1);
-                }
-                if (streak > (this.state.bestStreak || 0)) this.state.bestStreak = streak;
-                const now = new Date(); const monthStart = new Date(now.getFullYear(), now.getMonth(), 1); let daysChecked = 0; let daysPerfect = 0; let scanDate = new Date(monthStart); const todayDateObj = new Date();
-                while(scanDate <= todayDateObj) {
-                    const dStr = scanDate.toISOString().split('T')[0]; const s = this.getDayCompletionStatus(dStr);
-                    if (s.required > 0) { daysChecked++; if (s.complete) daysPerfect++; }
-                    scanDate.setDate(scanDate.getDate() + 1);
-                }
-                const adherence = daysChecked === 0 ? 0 : Math.round((daysPerfect / daysChecked) * 100);
-                return { streak, bestStreak: this.state.bestStreak, adherence };
-            }
-            getDayCompletionStatus(dateStr) { const logs = this.state.logs[dateStr] || {}; const takenIds = Object.keys(logs); let required = 0; let taken = 0; (this.state.medications || []).filter(m => !m.deleted).forEach(med => { if (this.isDue(med, dateStr)) { required++; if (takenIds.includes(med.id)) taken++; } }); return { required, taken, complete: required > 0 && required === taken }; }
-            toggleLog(medId) { if (!this.state.logs[this.today]) this.state.logs[this.today] = {}; if (this.state.logs[this.today][medId]) { delete this.state.logs[this.today][medId]; if (Object.keys(this.state.logs[this.today]).length === 0) delete this.state.logs[this.today]; this.saveData(); this.showToast("Marked as Not Taken"); } else { this.state.logs[this.today][medId] = { timestamp: Date.now(), value: true }; this.saveData(); this.showToast("Logged!"); if (this.getDayCompletionStatus(this.today).complete) this.triggerCelebration(); } }
-
-            renderUI() { 
-                this.renderGamification(); 
-                this.renderDashboard(); 
-                this.renderHistoryList(); 
-                this.renderCalendar(); 
-                this.renderSettingsList(); 
-                this.renderNotifications(); 
-                this.renderJournal();
-                if(document.getElementById('view-journal') && !document.getElementById('view-journal').classList.contains('hidden')) this.drawChart(); 
-            }
-            
-            renderDashboard() {
-                const container = document.getElementById('medication-cards-container');
-                const alertContainer = document.getElementById('missed-dose-alert-container');
-                container.innerHTML = '';
-                alertContainer.innerHTML = '';
-
-                // Missed Dose Alert Check
-                const missedData = this.checkMissedYesterday();
-                if (missedData) {
-                    let alertHTML = `
-                        <div class="bg-orange-50 border border-orange-200 rounded-2xl p-4 mb-6 animate-pop-in relative overflow-hidden">
-                            <div class="flex justify-between items-start mb-3 relative z-10">
-                                <div class="flex items-center gap-2">
-                                    <div class="w-8 h-8 rounded-full bg-orange-100 flex items-center justify-center text-orange-600"><i class="ph-bold ph-warning"></i></div>
-                                    <div><h4 class="font-bold text-orange-800 text-sm">Missed Yesterday</h4><p class="text-xs text-orange-600">Did you forget to log?</p></div>
-                                </div>
-                                <button onclick="window.app.dismissMissedAlert()" class="text-orange-400 hover:text-orange-600"><i class="ph-bold ph-x"></i></button>
-                            </div>
-                            <div class="space-y-2 relative z-10">
-                    `;
-                    missedData.meds.forEach(med => {
-                        alertHTML += `
-                            <div class="flex justify-between items-center bg-white/60 rounded-lg p-2">
-                                <span class="text-sm font-bold text-slate-700 ml-2">${med.name}</span>
-                                <button onclick="window.app.logMissedDose('${missedData.date}', '${med.id}')" class="text-xs font-bold text-orange-600 bg-orange-100 hover:bg-orange-200 px-3 py-1.5 rounded-lg transition-colors">I Took It</button>
-                            </div>
-                        `;
-                    });
-                    alertHTML += `</div></div>`;
-                    alertContainer.innerHTML = alertHTML;
-                }
-
-                const activeMeds = (this.state.medications || []).filter(m => !m.deleted);
-                
-                // Enhanced Empty State
-                if (activeMeds.length === 0) {
-                    container.innerHTML = `
-                        <div class="text-center py-12 bg-white/60 rounded-3xl border border-dashed border-indigo-200 flex flex-col items-center">
-                            <div class="w-20 h-20 bg-white rounded-full flex items-center justify-center shadow-sm mb-5">
-                                <i class="ph-fill ph-pill-plus text-4xl text-indigo-400"></i>
-                            </div>
-                            <h3 class="font-bold text-slate-700 text-xl mb-2">No medications yet</h3>
-                            <p class="text-sm text-slate-400 mb-8 max-w-[240px] leading-relaxed">Add your first pill to start building your daily streak!</p>
-                            <button onclick="window.app.openAddMedModal()" class="px-8 py-4 bg-indigo-600 text-white rounded-2xl font-bold shadow-lg shadow-indigo-200 hover:bg-indigo-700 transition-all btn-press flex items-center gap-2 animate-bounce">
-                                <i class="ph-bold ph-plus text-lg"></i> Add Medication
-                            </button>
-                            <button onclick="window.app.toggleSettings()" class="mt-4 text-xs font-bold text-slate-400 hover:text-indigo-600">
-                                Complete Profile
-                            </button>
-                        </div>
-                    `;
-                    return;
-                }
-                
-                activeMeds.forEach(med => {
-                    const status = this.checkStatus(med);
-                    const colorData = this.colors.find(c => c.name === med.color) || this.colors[0];
-                    let card = document.createElement('div');
-                    card.className = "rounded-2xl p-4 flex justify-between items-center transition-all duration-300 relative overflow-hidden group border";
-                    let button = document.createElement('button');
-                    button.onclick = (e) => { e.stopPropagation(); this.toggleLog(med.id); };
-                    button.className = "h-10 px-5 rounded-full font-bold text-sm transition-all shadow-sm btn-press flex items-center gap-1.5 z-10 cursor-pointer";
-                    let iconHTML = '';
-                    if (status.status === 'taken') {
-                        card.className += " bg-emerald-50/50 border-emerald-100 opacity-80";
-                        button.className += " bg-emerald-100 text-emerald-700 hover:bg-red-50 hover:text-red-600 hover:border-red-200 border border-transparent group";
-                        button.innerHTML = `<span class="group-hover:hidden flex items-center gap-1"><i class="ph-bold ph-check text-lg"></i> Done</span><span class="hidden group-hover:flex items-center gap-1"><i class="ph-bold ph-arrow-u-up-left"></i> Undo</span>`;
-                        iconHTML = `<div class="flex items-center gap-4 z-10"><div class="w-12 h-12 rounded-xl bg-emerald-100 flex items-center justify-center text-emerald-600 text-2xl shadow-sm"><i class="ph-fill ph-check-circle"></i></div><div><h3 class="font-bold text-slate-700">${med.name}</h3><p class="text-xs font-semibold text-emerald-600">Completed</p></div></div>`;
-                    } else if (status.status === 'due') {
-                        card.className += " bg-white border-slate-100 shadow-lg shadow-slate-200/50 scale-[1.02]";
-                        button.className += " bg-indigo-600 text-white shadow-md shadow-indigo-300 hover:bg-indigo-700";
-                        button.innerHTML = 'Take';
-                        iconHTML = `<div class="flex items-center gap-4 z-10"><div class="w-12 h-12 rounded-xl ${colorData.bg.replace('bg-', 'bg-').replace('500', '100')} flex items-center justify-center ${colorData.text} text-2xl shadow-inner"><i class="ph-fill ph-pill"></i></div><div><h3 class="font-bold text-slate-800">${med.name}</h3><p class="text-xs font-bold text-indigo-500 animate-pulse">Due Today</p></div></div>`;
-                    } else {
-                        card.className += " bg-white border-slate-100 opacity-60 grayscale-[0.5]";
-                        button.className += " bg-slate-100 text-slate-400";
-                        if(status.status === 'skip') { button.disabled = true; button.textContent = "Rest"; } else { button.textContent = "Log"; }
-                        iconHTML = `<div class="flex items-center gap-4 z-10"><div class="w-12 h-12 rounded-xl bg-slate-100 flex items-center justify-center text-slate-400 text-2xl"><i class="ph-fill ph-pill"></i></div><div><h3 class="font-bold text-slate-600">${med.name}</h3><p class="text-xs text-slate-400">${status.text}</p></div></div>`;
-                    }
-                    card.insertAdjacentHTML('afterbegin', iconHTML); card.appendChild(button); container.appendChild(card);
-                });
-
-                // Add "Add New" button at bottom of list if meds exist
-                const addBtn = document.createElement('button');
-                addBtn.onclick = () => window.app.openAddMedModal();
-                addBtn.className = "w-full py-3 mt-2 bg-white border-2 border-dashed border-slate-200 rounded-2xl text-slate-400 font-bold text-sm hover:border-indigo-300 hover:text-indigo-500 hover:bg-indigo-50 transition-all btn-press flex items-center justify-center gap-2 group";
-                addBtn.innerHTML = '<i class="ph-bold ph-plus-circle text-lg group-hover:scale-110 transition-transform"></i> Add Medication';
-                container.appendChild(addBtn);
-            }
-            
-            renderGamification() { 
-                const stats = this.calculateStats(); 
-                const streakEl = document.getElementById('streak-count');
-                if(streakEl) streakEl.textContent = stats.streak; 
-                
-                const bestEl = document.getElementById('best-streak-count');
-                if(bestEl) bestEl.textContent = stats.bestStreak; 
-                
-                const fireIcon = document.getElementById('streak-fire-icon'); 
-                const msg = document.getElementById('streak-message'); 
-                
-                if (fireIcon && msg) {
-                    if (stats.streak > 0) { 
-                        fireIcon.classList.add('text-orange-400', 'pulse-fire'); 
-                        fireIcon.classList.remove('text-slate-300'); 
-                        msg.textContent = stats.streak > 3 ? "You're on fire! 🔥" : "Good start!"; 
-                    } else { 
-                        fireIcon.classList.remove('text-orange-400', 'pulse-fire'); 
-                        fireIcon.classList.add('text-slate-300'); 
-                        msg.textContent = "Start a streak today!"; 
-                    } 
-                }
-                
-                const adhereEl = document.getElementById('adherence-rate');
-                if(adhereEl) adhereEl.textContent = stats.adherence + "%"; 
-            }
-            
-            renderHistoryList() {
-                const list = document.getElementById('history-list');
-                const prevBtn = document.getElementById('btn-prev-page'); const nextBtn = document.getElementById('btn-next-page'); const pageInd = document.getElementById('page-indicator');
-                list.innerHTML = '';
-                const allDates = Object.keys(this.state.logs).sort().reverse();
-                const totalPages = Math.ceil(allDates.length / this.ITEMS_PER_PAGE);
-                const start = this.historyPage * this.ITEMS_PER_PAGE;
-                const end = start + this.ITEMS_PER_PAGE;
-                const pageDates = allDates.slice(start, end);
-                pageInd.textContent = `${this.historyPage + 1} / ${totalPages || 1}`; prevBtn.disabled = this.historyPage === 0; nextBtn.disabled = end >= allDates.length;
-                if (pageDates.length === 0) { list.innerHTML = '<div class="text-center text-slate-300 text-xs font-medium py-8">No medication history</div>'; return; }
-                pageDates.forEach(date => {
-                    const dayLogs = this.state.logs[date]; if (!dayLogs) return;
-                    const d = new Date(date + 'T00:00:00');
-                    const weekday = d.toLocaleDateString('en-US', { weekday: 'short' });
-                    let pillsHtml = '';
-                    Object.keys(dayLogs).forEach(medId => { const med = this.state.medications.find(m => m.id === medId); if (med) { const colorData = this.colors.find(c => c.name === med.color); pillsHtml += `<div class="w-2 h-2 rounded-full ${colorData.bg}"></div>`; } });
-                    list.innerHTML += `<div class="flex items-center justify-between py-3 px-4 border-b border-slate-50 last:border-0 hover:bg-slate-50 transition-colors cursor-pointer group" onclick="window.app.openDayDetails('${date}')"><div class="flex items-center gap-3"><div class="flex flex-col items-center justify-center w-10 h-10 rounded-lg bg-slate-50 text-slate-500 font-bold group-hover:bg-indigo-50 group-hover:text-indigo-600 transition-colors"><span class="text-[9px] uppercase leading-none">${weekday}</span><span class="text-lg leading-none mt-0.5">${d.getDate()}</span></div><div class="flex gap-1.5">${pillsHtml}</div></div><i class="ph-bold ph-caret-right text-slate-300 group-hover:text-indigo-400"></i></div>`;
-                });
-            }
-
-            // Updated Calendar with Indicators
-            renderCalendar() {
-                const year = this.currentCalendarDate.getFullYear(); const month = this.currentCalendarDate.getMonth();
-                document.getElementById('calendar-month-title').textContent = this.currentCalendarDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
-                const firstDay = new Date(year, month, 1); const lastDay = new Date(year, month + 1, 0); const daysInMonth = lastDay.getDate(); const startDayIndex = firstDay.getDay();
-                const grid = document.getElementById('calendar-days'); grid.innerHTML = '';
-                for (let i = 0; i < startDayIndex; i++) grid.innerHTML += `<div></div>`;
-                const todayDate = new Date(); todayDate.setHours(0,0,0,0);
-                
-                for (let day = 1; day <= daysInMonth; day++) {
-                    const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-                    const currentLoopDate = new Date(year, month, day);
-                    const completion = this.getDayCompletionStatus(dateStr);
-                    const hasWeight = this.state.weightLogs[dateStr];
-                    const hasNote = this.state.noteLogs[dateStr];
-                    
-                    let colorClass = "bg-slate-50 text-slate-600 hover:bg-slate-100"; let isTodayClass = "";
-                    if (currentLoopDate <= todayDate) {
-                        if (completion.required > 0) {
-                            if (completion.complete) colorClass = "bg-emerald-100 text-emerald-700 ring-1 ring-emerald-200 shadow-sm";
-                            else if (completion.taken > 0) colorClass = "bg-amber-100 text-amber-700 ring-1 ring-amber-200 shadow-sm";
-                            else colorClass = "bg-red-50 text-red-600 ring-1 ring-red-100";
-                        }
-                    }
-                    if (dateStr === this.today) isTodayClass = "ring-2 ring-offset-2 ring-indigo-500 z-10 font-black";
-                    
-                    let indicators = '';
-                    if (hasWeight) indicators += `<div class="w-1 h-1 rounded-full bg-purple-400"></div>`;
-                    if (hasNote) indicators += `<div class="w-1 h-1 rounded-full bg-slate-400"></div>`;
-
-                    grid.innerHTML += `<div class="calendar-day ${colorClass} ${isTodayClass}" onclick="window.app.openDayDetails('${dateStr}')"><span class="mb-0.5">${day}</span><div class="dot-container flex gap-0.5">${indicators}</div></div>`;
-                }
-            }
-
-            openDayDetails(dateStr) {
-                const modal = document.getElementById('day-details-modal');
-                const d = new Date(dateStr + 'T00:00:00');
-                const todayDate = new Date(); todayDate.setHours(0,0,0,0);
-                const checkDate = new Date(dateStr + 'T00:00:00');
-                const isFuture = checkDate > todayDate;
-                const isToday = checkDate.getTime() === todayDate.getTime();
-
-                document.getElementById('detail-date-title').textContent = d.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
-                const takenList = document.getElementById('detail-taken-list');
-                const missedList = document.getElementById('detail-missed-list');
-                const missedTitle = document.getElementById('detail-missed-title');
-                const journalSection = document.getElementById('detail-journal-section');
-                takenList.innerHTML = ''; missedList.innerHTML = '';
-                
-                if (isFuture) { missedTitle.textContent = "Scheduled"; missedTitle.className = "text-[10px] font-bold text-blue-400 uppercase tracking-widest mb-3"; }
-                else if (isToday) { missedTitle.textContent = "Due Today"; missedTitle.className = "text-[10px] font-bold text-indigo-400 uppercase tracking-widest mb-3"; }
-                else { missedTitle.textContent = "Missed"; missedTitle.className = "text-[10px] font-bold text-red-400 uppercase tracking-widest mb-3"; }
-
-                const dayLogs = this.state.logs[dateStr] || {};
-                const takenIds = Object.keys(dayLogs);
-                if (takenIds.length === 0) takenList.innerHTML = '<div class="text-xs text-slate-400 italic font-medium">Nothing logged</div>';
-                takenIds.forEach(id => { const med = this.state.medications.find(m => m.id === id); if (med) takenList.innerHTML += `<div class="p-3 rounded-xl bg-emerald-50 border border-emerald-100 flex items-center gap-3"><i class="ph-fill ph-check-circle text-emerald-500 text-lg"></i><span class="text-sm font-bold text-slate-700">${med.name}</span></div>`; });
-
-                let missedCount = 0; let requiredCount = 0;
-                (this.state.medications || []).filter(m => !m.deleted).forEach(med => {
-                     if (this.isDue(med, dateStr)) { 
-                        requiredCount++; 
-                        if (!takenIds.includes(med.id)) { 
-                             let style = "bg-red-50 border-red-100 text-red-500"; let icon = "ph-warning-circle";
-                             if (isFuture) { style = "bg-blue-50 border-blue-100 text-blue-500"; icon = "ph-clock"; }
-                             else if (isToday) { style = "bg-indigo-50 border-indigo-100 text-indigo-500"; icon = "ph-circle"; }
-                             missedList.innerHTML += `<div class="p-3 rounded-xl border ${style} flex items-center gap-3"><i class="ph-fill ${icon} text-lg"></i><span class="text-sm font-bold text-slate-700">${med.name}</span></div>`; 
-                             missedCount++; 
-                        } 
-                    }
-                });
-                
-                if (missedCount === 0) { 
-                    if (requiredCount === 0) missedList.innerHTML = '<div class="text-xs font-bold text-slate-400 flex items-center gap-1 bg-slate-50 inline-block px-2 py-1 rounded-lg">No medications scheduled</div>'; 
-                    else if (!isFuture) missedList.innerHTML = '<div class="text-xs font-bold text-emerald-600 flex items-center gap-1 bg-emerald-50 inline-block px-2 py-1 rounded-lg">100% Complete</div>'; 
-                    else missedList.innerHTML = '<div class="text-xs text-slate-400 italic font-medium">Nothing pending</div>'; 
-                }
-
-                const w = this.state.weightLogs[dateStr]; const n = this.state.noteLogs[dateStr];
-                if (w || n) {
-                    journalSection.classList.remove('hidden'); let content = '';
-                    if (w) content += `<div class="flex items-center gap-2 mb-2"><i class="ph-fill ph-scales text-purple-400"></i> <span class="font-bold">${w} ${this.state.userProfile.unit}</span></div>`;
-                    if (n) content += `<div class="flex items-start gap-2"><i class="ph-fill ph-notebook text-amber-400 mt-0.5"></i> <span class="italic">"${n}"</span></div>`;
-                    document.getElementById('detail-journal-content').innerHTML = content;
-                } else { journalSection.classList.add('hidden'); }
-                modal.classList.remove('hidden');
-            }
-
-            setChartRange(range) {
-                this.chartRange = range;
-                document.querySelectorAll('.chart-range-btn').forEach(btn => {
-                    if(btn.dataset.range === range) btn.className = "chart-range-btn text-[10px] font-bold px-2 py-1 rounded bg-indigo-100 text-indigo-600 transition-colors";
-                    else btn.className = "chart-range-btn text-[10px] font-bold px-2 py-1 rounded bg-slate-100 text-slate-500 hover:bg-indigo-100 hover:text-indigo-600 transition-colors";
-                });
-                this.drawChart();
-            }
-
-            drawChart() {
-                const canvas = document.getElementById('weight-chart'); if(!canvas) return;
-                const ctx = canvas.getContext('2d');
-                const dpr = window.devicePixelRatio || 1; const rect = canvas.getBoundingClientRect();
-                canvas.width = rect.width * dpr; canvas.height = rect.height * dpr; ctx.scale(dpr, dpr);
-                const w = rect.width; const h = rect.height;
-
-                const now = new Date();
-                let cutoff = new Date(0); 
-                if (this.chartRange === '1m') cutoff.setMonth(now.getMonth() - 1);
-                else if (this.chartRange === '3m') cutoff.setMonth(now.getMonth() - 3);
-                else if (this.chartRange === '6m') cutoff.setMonth(now.getMonth() - 6);
-                else if (this.chartRange === '1y') cutoff.setFullYear(now.getFullYear() - 1);
-
-                const allData = Object.entries(this.state.weightLogs).sort((a,b) => a[0].localeCompare(b[0]));
-                const data = allData.filter(d => new Date(d[0]) >= cutoff);
-
-                ctx.clearRect(0,0,w,h);
-                ctx.strokeStyle = "#f1f5f9"; ctx.lineWidth = 1;
-                for(let i=1; i<5; i++) { let y = (h/5)*i; ctx.beginPath(); ctx.moveTo(40, y); ctx.lineTo(w, y); ctx.stroke(); }
-                if(data.length === 0) { ctx.fillStyle = "#94a3b8"; ctx.font = "12px Inter"; ctx.textAlign = "center"; ctx.fillText("No data for this period", w/2+20, h/2); return; }
-                const vals = data.map(d => d[1]); let min = Math.min(...vals); let max = Math.max(...vals);
-                if(min === max) { min -= 2; max += 2; } else { const buf = (max-min)*0.1; min-=buf; max+=buf; }
-                const range = max - min;
-                const getX = (i) => (data.length === 1) ? (w/2 + 20) : (i / (data.length - 1)) * (w - 50) + 40;
-                const getY = (v) => h - 20 - ((v - min) / range) * (h - 40);
-                ctx.fillStyle = "#64748b"; ctx.font = "10px Inter"; ctx.textAlign = "right";
-                ctx.fillText(max.toFixed(1), 35, 20); ctx.fillText(min.toFixed(1), 35, h-20); ctx.fillText(((min+max)/2).toFixed(1), 35, h/2);
-                if (data.length > 1) {
-                    ctx.beginPath(); ctx.strokeStyle = "#4f46e5"; ctx.lineWidth = 3; ctx.lineCap = "round"; ctx.lineJoin = "round";
-                    data.forEach((d, i) => { const x = getX(i); const y = getY(d[1]); if(i===0) ctx.moveTo(x, y); else ctx.lineTo(x, y); });
-                    ctx.stroke();
-                    const grad = ctx.createLinearGradient(0, 0, 0, h); grad.addColorStop(0, "rgba(79, 70, 229, 0.2)"); grad.addColorStop(1, "rgba(79, 70, 229, 0)");
-                    ctx.lineTo(getX(data.length-1), h); ctx.lineTo(getX(0), h); ctx.closePath(); ctx.fillStyle = grad; ctx.fill();
-                }
-                ctx.fillStyle = "#fff"; ctx.strokeStyle = "#4f46e5"; ctx.lineWidth = 2;
-                data.forEach((d, i) => { const x = getX(i); const y = getY(d[1]); ctx.beginPath(); ctx.arc(x, y, 4, 0, Math.PI*2); ctx.fill(); ctx.stroke(); });
-                ctx.fillStyle = "#94a3b8"; ctx.textAlign = "center";
-                if(data.length > 1) { ctx.fillText(new Date(data[0][0]).toLocaleDateString(undefined,{month:'short',day:'numeric'}), getX(0), h-5); ctx.fillText(new Date(data[data.length-1][0]).toLocaleDateString(undefined,{month:'short',day:'numeric'}), getX(data.length-1), h-5); } else { ctx.fillText(new Date(data[0][0]).toLocaleDateString(undefined,{month:'short',day:'numeric'}), getX(0), h-5); }
-                canvas.onclick = (e) => {
-                    const rect = canvas.getBoundingClientRect(); const clickX = e.clientX - rect.left;
-                    let closest = null; let minDist = 999;
-                    data.forEach((d, i) => { const x = getX(i); const dist = Math.abs(x - clickX); if(dist < minDist) { minDist = dist; closest = d; } });
-                    if(closest && minDist < 40) {
-                        const tip = document.getElementById('chart-tooltip'); const idx = data.indexOf(closest);
-                        tip.style.left = (getX(idx) + 10) + 'px'; tip.style.top = (getY(closest[1]) + 10) + 'px';
-                        tip.textContent = `${closest[0].slice(5)}: ${closest[1]}`; tip.style.opacity = 1;
-                        setTimeout(() => tip.style.opacity = 0, 2000);
-                    }
+            // --- Tutorial System ---
+            showTutorial(view) {
+                if (this.state.tutorialsSeen && this.state.tutorialsSeen[view]) return;
+                const tutorialContent = {
+                    dashboard: { title: "Your Med Dashboard", text: "This is your daily checklist. Tap any pill to mark it taken. Use the 'Add Medication' button below to set up your schedule.", icon: "ph-pill" },
+                    journal: { title: "Health Journal", text: "Log your weight and daily notes here. The smart chart will visualize your progress over time.", icon: "ph-scales" },
+                    calendar: { title: "History & Calendar", text: "See your past adherence at a glance. Tap any date to view details or correct past entries.", icon: "ph-calendar-blank" }
                 };
+                
+                const content = tutorialContent[view];
+                if (!content) return;
+
+                document.getElementById('tutorial-icon').className = `ph-fill ${content.icon}`;
+                document.getElementById('tutorial-title').textContent = content.title;
+                document.getElementById('tutorial-text').textContent = content.text;
+                document.getElementById('tutorial-overlay').classList.remove('hidden');
+                this.currentTutorialView = view;
             }
-            
-            logJournalEntry() {
-                const date = document.getElementById('journal-date').value; if(!date) return alert("Please select a date");
-                const weightVal = document.getElementById('weight-input').value; const noteVal = document.getElementById('note-input').value.trim();
-                let updated = false;
-                if (weightVal) { this.state.weightLogs[date] = parseFloat(weightVal); updated = true; }
-                if (noteVal) { if (this.state.noteLogs[date]) this.state.noteLogs[date] += "\n\n" + noteVal; else this.state.noteLogs[date] = noteVal; updated = true; }
-                if(updated) { this.saveData(); this.showToast("Entry saved"); document.getElementById('note-input').value = ''; }
+
+            dismissTutorial() {
+                document.getElementById('tutorial-overlay').classList.add('hidden');
+                if (this.currentTutorialView) {
+                    if(!this.state.tutorialsSeen) this.state.tutorialsSeen = {};
+                    this.state.tutorialsSeen[this.currentTutorialView] = true;
+                    this.saveData();
+                    this.currentTutorialView = null;
+                }
             }
-            deleteJournalEntry(date, type) { if(type === 'weight') delete this.state.weightLogs[date]; if(type === 'note') delete this.state.noteLogs[date]; this.saveData(); }
-            getBMI() { const h = parseFloat(this.state.userProfile.height); const dates = Object.keys(this.state.weightLogs).sort().reverse(); if (dates.length === 0) return null; return this.calculateBMI(this.state.weightLogs[dates[0]]); }
-            calculateBMI(weight) { const h = parseFloat(this.state.userProfile.height); if (!h || !weight) return null; let w = weight; if (this.state.userProfile.unit === 'lbs') w = weight * 0.453592; const hm = h / 100; const bmi = w / (hm * hm); let l = "Normal", c = "text-emerald-600 bg-emerald-50 border-emerald-100"; if (bmi < 18.5) { l = "Underweight"; c = "text-blue-600 bg-blue-50 border-blue-100"; } else if (bmi >= 25 && bmi < 30) { l = "Overweight"; c = "text-amber-600 bg-amber-50 border-amber-100"; } else if (bmi >= 30) { l = "Obese"; c = "text-red-600 bg-red-50 border-red-100"; } return { value: bmi.toFixed(1), label: l, color: c }; }
-            
-            renderJournal() {
-                document.getElementById('weight-unit-label').textContent = this.state.userProfile.unit;
-                const dateInput = document.getElementById('journal-date'); if (!dateInput.value) dateInput.value = this.today;
-                const selectedDate = dateInput.value; const w = this.state.weightLogs[selectedDate];
-                document.getElementById('weight-input').value = w || '';
-                const bmi = this.getBMI(); const badge = document.getElementById('bmi-badge');
-                if (bmi) { badge.classList.remove('hidden'); badge.setAttribute('class', `px-2.5 py-1 rounded-lg text-xs font-bold border ${bmi.color}`); badge.textContent = `BMI: ${bmi.value} (${bmi.label})`; document.getElementById('height-nudge').classList.add('hidden'); } else if (!this.state.userProfile.height) { badge.classList.add('hidden'); document.getElementById('height-nudge').classList.remove('hidden'); }
-                const list = document.getElementById('journal-history-list'); list.innerHTML = '';
-                const allDates = new Set([...Object.keys(this.state.weightLogs), ...Object.keys(this.state.noteLogs)]); const sorted = Array.from(allDates).sort().reverse();
-                const ITEMS = 5; const total = Math.ceil(sorted.length/ITEMS); const start = this.journalPage*ITEMS; const end = start+ITEMS; const items = sorted.slice(start, end);
-                document.getElementById('btn-j-prev').disabled = this.journalPage === 0; document.getElementById('btn-j-next').disabled = end >= sorted.length;
-                if (items.length === 0) { list.innerHTML = '<div class="text-center text-slate-300 text-xs italic py-4">No entries yet</div>'; return; }
-                items.forEach(date => {
-                    const w = this.state.weightLogs[date]; const n = this.state.noteLogs[date]; let bDis = '';
-                    if (w && this.state.userProfile.height) { const b = this.calculateBMI(w); if(b) bDis = `<span class="text-[9px] font-bold ${b.color} px-1.5 py-0.5 rounded ml-2 border">BMI ${b.value}</span>`; }
-                    let html = `<div class="bg-white p-3 rounded-xl border border-slate-100 shadow-sm"><div class="flex justify-between items-center mb-1"><span class="text-xs font-bold text-slate-400">${date}</span><div class="flex gap-2">`;
-                    if(w) html += `<button onclick="window.app.deleteJournalEntry('${date}','weight')" class="text-[10px] text-red-300 hover:text-red-500 font-medium">Del W</button>`;
-                    if(n) html += `<button onclick="window.app.deleteJournalEntry('${date}','note')" class="text-[10px] text-red-300 hover:text-red-500 font-medium">Del N</button>`;
-                    html += `</div></div>`;
-                    if (w) html += `<div class="flex items-center mb-1"><i class="ph-fill ph-scales text-purple-400 mr-2"></i> <span class="font-bold text-slate-700 text-sm">${w} ${this.state.userProfile.unit}</span> ${bDis}</div>`;
-                    if (n) html += `<div class="flex items-start gap-2"><i class="ph-fill ph-notebook text-amber-400 mt-0.5"></i> <span class="text-xs text-slate-600 italic whitespace-pre-wrap">${n}</span></div>`;
-                    list.innerHTML += html + `</div>`;
-                });
-            }
-            changeJournalPage(d) { this.journalPage += d; if(this.journalPage < 0) this.journalPage = 0; this.renderJournal(); }
-            
+
             // --- View Switching ---
             switchView(viewName) {
                 ['help', 'dashboard', 'journal', 'calendar'].forEach(v => {
@@ -853,36 +475,67 @@
                         }
                     }
                 });
+                
+                // Trigger Tutorial if needed
+                if (['dashboard', 'journal', 'calendar'].includes(viewName)) {
+                    setTimeout(() => this.showTutorial(viewName), 500);
+                }
+
                 if (viewName === 'calendar') this.renderCalendar();
                 if (viewName === 'journal') { this.renderJournal(); setTimeout(() => this.drawChart(), 100); }
             }
-            renderUI() { 
-                this.renderGamification(); 
-                this.renderDashboard(); 
-                this.renderHistoryList(); 
-                this.renderCalendar(); 
-                this.renderSettingsList(); 
-                this.renderNotifications(); 
-                this.renderJournal();
-                if(document.getElementById('view-journal') && !document.getElementById('view-journal').classList.contains('hidden')) this.drawChart(); 
+
+            // --- Standard Methods ---
+            setupInputs() { document.getElementById('new-med-start-date').value = this.today; const journalDateInput = document.getElementById('journal-date'); if(journalDateInput) journalDateInput.value = this.today; }
+            getLocalDateString() { const d = new Date(); return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().split('T')[0]; }
+            loadData() {
+                const saved = localStorage.getItem('medTrackerData');
+                if (saved) { try { const parsed = JSON.parse(saved); if(!parsed.version || parsed.version < 6) this.state = { ...this.state, ...parsed, version: 6, weightLogs: parsed.weightLogs || {}, noteLogs: parsed.noteLogs || {}, userProfile: parsed.userProfile || { name:"", height:"", unit:"kg" } }; else this.state = { ...this.state, ...parsed }; } catch (e) { console.error(e); } }
+                document.getElementById('settings-name').value = this.state.userProfile.name || ""; document.getElementById('settings-height').value = this.state.userProfile.height || ""; document.getElementById('settings-unit').value = this.state.userProfile.unit || "kg";
             }
+            saveData() { localStorage.setItem('medTrackerData', JSON.stringify(this.state)); this.renderUI(); }
+            saveProfile() { this.state.userProfile.name = document.getElementById('settings-name').value; this.state.userProfile.height = document.getElementById('settings-height').value; this.state.userProfile.unit = document.getElementById('settings-unit').value; this.saveData(); }
+            showHelp() { this.switchView('help'); }
+            finishOnboarding() { localStorage.setItem('medTracker_hasSeenHelp', 'true'); this.switchView('dashboard'); }
+            checkMissedYesterday() { if (this.missedAlertDismissed) return null; const y = new Date(); y.setDate(y.getDate() - 1); const yesterdayStr = new Date(y.getTime() - y.getTimezoneOffset() * 60000).toISOString().split('T')[0]; const missed = []; (this.state.medications || []).filter(m => !m.deleted).forEach(med => { if (this.isDue(med, yesterdayStr)) { const taken = this.state.logs[yesterdayStr] && this.state.logs[yesterdayStr][med.id]; if (!taken) missed.push(med); } }); return missed.length > 0 ? { date: yesterdayStr, meds: missed } : null; }
+            logMissedDose(date, medId) { if (!this.state.logs[date]) this.state.logs[date] = {}; this.state.logs[date][medId] = { timestamp: Date.now(), value: true }; this.saveData(); }
+            dismissMissedAlert() { this.missedAlertDismissed = true; this.renderUI(); }
+            isDue(med, dateStr) { if (med.deleted) return false; if (med.schedule === 'daily') return true; const checkDate = new Date(dateStr + 'T00:00:00'); if (med.schedule === 'weekly') { const days = med.scheduleDetails.days || []; const dayOfWeek = checkDate.getDay(); return days.includes(dayOfWeek); } if (med.schedule === 'monthly') { const targetDay = parseInt(med.scheduleDetails.dayOfMonth); return checkDate.getDate() === targetDay; } if (med.schedule === 'alternate') { if (!med.scheduleDetails.startDate) return true; const start = new Date(med.scheduleDetails.startDate + 'T00:00:00'); const diffTime = checkDate - start; const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24)); return diffDays >= 0 && diffDays % 2 === 0; } return false; }
+            checkStatus(med) { const isTaken = this.state.logs[this.today] && this.state.logs[this.today][med.id]; const dueToday = this.isDue(med, this.today); if (isTaken) return { status: 'taken', text: 'Taken' }; if (dueToday) return { status: 'due', text: 'Due Today' }; if (med.schedule === 'daily') return { status: 'neutral', text: 'Daily' }; return { status: 'skip', text: 'Rest Day' }; }
+            calculateStats() { const activeMeds = (this.state.medications || []).filter(m => !m.deleted); if (activeMeds.length === 0) return { streak: 0, bestStreak: this.state.bestStreak, adherence: 0 }; let streak = 0; let checkDate = new Date(); const todayStatus = this.getDayCompletionStatus(this.today); if (!todayStatus.complete) checkDate.setDate(checkDate.getDate() - 1); let safetyLimit = 1000; while (safetyLimit-- > 0) { const dateStr = checkDate.toISOString().split('T')[0]; const status = this.getDayCompletionStatus(dateStr); if (status.required === 0) {} else if (status.complete) streak++; else break; checkDate.setDate(checkDate.getDate() - 1); } if (streak > (this.state.bestStreak || 0)) this.state.bestStreak = streak; const now = new Date(); const monthStart = new Date(now.getFullYear(), now.getMonth(), 1); let daysChecked = 0; let daysPerfect = 0; let scanDate = new Date(monthStart); const todayDateObj = new Date(); while(scanDate <= todayDateObj) { const dStr = scanDate.toISOString().split('T')[0]; const s = this.getDayCompletionStatus(dStr); if (s.required > 0) { daysChecked++; if (s.complete) daysPerfect++; } scanDate.setDate(scanDate.getDate() + 1); } const adherence = daysChecked === 0 ? 0 : Math.round((daysPerfect / daysChecked) * 100); return { streak, bestStreak: this.state.bestStreak, adherence }; }
+            getDayCompletionStatus(dateStr) { const logs = this.state.logs[dateStr] || {}; const takenIds = Object.keys(logs); let required = 0; let taken = 0; (this.state.medications || []).filter(m => !m.deleted).forEach(med => { if (this.isDue(med, dateStr)) { required++; if (takenIds.includes(med.id)) taken++; } }); return { required, taken, complete: required > 0 && required === taken }; }
+            toggleLog(medId) { if (!this.state.logs[this.today]) this.state.logs[this.today] = {}; if (this.state.logs[this.today][medId]) { delete this.state.logs[this.today][medId]; if (Object.keys(this.state.logs[this.today]).length === 0) delete this.state.logs[this.today]; this.saveData(); this.showToast("Marked as Not Taken"); } else { this.state.logs[this.today][medId] = { timestamp: Date.now(), value: true }; this.saveData(); this.showToast("Logged!"); if (this.getDayCompletionStatus(this.today).complete) this.triggerCelebration(); } }
+
+            renderUI() { this.renderGamification(); this.renderDashboard(); this.renderHistoryList(); this.renderCalendar(); this.renderSettingsList(); this.renderNotifications(); this.renderJournal(); if(document.getElementById('view-journal') && !document.getElementById('view-journal').classList.contains('hidden')) this.drawChart(); }
             
-            // Boilerplate Helpers
-            initWeekCheckboxes() { const c = document.getElementById('week-checkboxes'); c.innerHTML = ''; ['S','M','T','W','T','F','S'].forEach((d,i) => { let val = i; if(i===0) val=0; else val=i; c.innerHTML += `<label class="cursor-pointer group"><input type="checkbox" class="hidden day-checkbox" value="${val}"><div class="w-9 h-9 rounded-full border border-slate-200 bg-white flex items-center justify-center text-xs font-bold text-slate-400 transition-all group-hover:border-indigo-200">${d}</div></label>`; }); }
-            renderSettingsList() { const list = document.getElementById('settings-med-list'); list.innerHTML = ''; (this.state.medications || []).filter(m => !m.deleted).forEach(med => { const colorData = this.colors.find(c => c.name === med.color); let scheduleText = med.schedule; if (med.schedule === 'weekly') scheduleText = "Weekly"; if (med.schedule === 'monthly') scheduleText = "Monthly"; if (med.schedule === 'alternate') scheduleText = "Every Other Day"; list.innerHTML += `<div class="flex items-center justify-between p-3.5 bg-slate-50 hover:bg-slate-100 rounded-2xl transition-colors group"><div class="flex items-center gap-3.5"><div class="w-10 h-10 rounded-xl ${colorData.bg} flex items-center justify-center text-white shadow-sm"><span class="font-bold text-sm">${med.name[0]}</span></div><div><div class="font-bold text-sm text-slate-700">${med.name}</div><div class="text-[10px] font-bold text-slate-400 uppercase tracking-wide">${scheduleText}</div></div></div><button onclick="window.app.deleteMedication('${med.id}')" class="w-8 h-8 flex items-center justify-center text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-full transition-all"><i class="ph-bold ph-trash"></i></button></div>`; }); }
-            renderColorPicker() {
-                const container = document.getElementById('color-picker');
-                if (!container) return;
-                container.innerHTML = '';
-                this.colors.forEach(c => {
-                    const isSelected = this.selectedColor === c.name;
-                    container.innerHTML += `<button onclick="window.app.selectColor('${c.name}')" class="w-8 h-8 rounded-full ${c.bg} ${isSelected ? 'ring-2 ring-offset-2 ring-slate-400 scale-110' : 'opacity-70 hover:opacity-100'} transition-all shrink-0"></button>`;
+            renderDashboard() {
+                const container = document.getElementById('medication-cards-container'); const alertContainer = document.getElementById('missed-dose-alert-container'); container.innerHTML = ''; alertContainer.innerHTML = '';
+                const missedData = this.checkMissedYesterday();
+                if (missedData) { let alertHTML = `<div class="bg-orange-50 border border-orange-200 rounded-2xl p-4 mb-6 animate-pop-in relative overflow-hidden"><div class="flex justify-between items-start mb-3 relative z-10"><div class="flex items-center gap-2"><div class="w-8 h-8 rounded-full bg-orange-100 flex items-center justify-center text-orange-600"><i class="ph-bold ph-warning"></i></div><div><h4 class="font-bold text-orange-800 text-sm">Missed Yesterday</h4><p class="text-xs text-orange-600">Did you forget to log?</p></div></div><button onclick="window.app.dismissMissedAlert()" class="text-orange-400 hover:text-orange-600"><i class="ph-bold ph-x"></i></button></div><div class="space-y-2 relative z-10">`; missedData.meds.forEach(med => { alertHTML += `<div class="flex justify-between items-center bg-white/60 rounded-lg p-2"><span class="text-sm font-bold text-slate-700 ml-2">${med.name}</span><button onclick="window.app.logMissedDose('${missedData.date}', '${med.id}')" class="text-xs font-bold text-orange-600 bg-orange-100 hover:bg-orange-200 px-3 py-1.5 rounded-lg transition-colors">I Took It</button></div>`; }); alertHTML += `</div></div>`; alertContainer.innerHTML = alertHTML; }
+                const activeMeds = (this.state.medications || []).filter(m => !m.deleted);
+                if (activeMeds.length === 0) { container.innerHTML = `<div class="text-center py-12 bg-white/60 rounded-3xl border border-dashed border-indigo-200 flex flex-col items-center"><div class="w-20 h-20 bg-white rounded-full flex items-center justify-center shadow-sm mb-5"><i class="ph-fill ph-pill-plus text-4xl text-indigo-400"></i></div><h3 class="font-bold text-slate-700 text-xl mb-2">No medications yet</h3><p class="text-sm text-slate-400 mb-8 max-w-[240px] leading-relaxed">Add your first pill to start building your daily streak!</p><button onclick="window.app.openAddMedModal()" class="px-8 py-4 bg-indigo-600 text-white rounded-2xl font-bold shadow-lg shadow-indigo-200 hover:bg-indigo-700 transition-all btn-press flex items-center gap-2 animate-bounce"><i class="ph-bold ph-plus text-lg"></i> Add Medication</button><button onclick="window.app.toggleSettings()" class="mt-4 text-xs font-bold text-slate-400 hover:text-indigo-600">Complete Profile</button></div>`; return; }
+                activeMeds.forEach(med => {
+                    const status = this.checkStatus(med); const colorData = this.colors.find(c => c.name === med.color) || this.colors[0];
+                    let card = document.createElement('div'); card.className = "rounded-2xl p-4 flex justify-between items-center transition-all duration-300 relative overflow-hidden group border";
+                    let button = document.createElement('button'); button.onclick = (e) => { e.stopPropagation(); this.toggleLog(med.id); }; button.className = "h-10 px-5 rounded-full font-bold text-sm transition-all shadow-sm btn-press flex items-center gap-1.5 z-10 cursor-pointer";
+                    let iconHTML = '';
+                    if (status.status === 'taken') { card.className += " bg-emerald-50/50 border-emerald-100 opacity-80"; button.className += " bg-emerald-100 text-emerald-700 hover:bg-red-50 hover:text-red-600 hover:border-red-200 border border-transparent group"; button.innerHTML = `<span class="group-hover:hidden flex items-center gap-1"><i class="ph-bold ph-check text-lg"></i> Done</span><span class="hidden group-hover:flex items-center gap-1"><i class="ph-bold ph-arrow-u-up-left"></i> Undo</span>`; iconHTML = `<div class="flex items-center gap-4 z-10"><div class="w-12 h-12 rounded-xl bg-emerald-100 flex items-center justify-center text-emerald-600 text-2xl shadow-sm"><i class="ph-fill ph-check-circle"></i></div><div><h3 class="font-bold text-slate-700">${med.name}</h3><p class="text-xs font-semibold text-emerald-600">Completed</p></div></div>`; } else if (status.status === 'due') { card.className += " bg-white border-slate-100 shadow-lg shadow-slate-200/50 scale-[1.02]"; button.className += " bg-indigo-600 text-white shadow-md shadow-indigo-300 hover:bg-indigo-700"; button.innerHTML = 'Take'; iconHTML = `<div class="flex items-center gap-4 z-10"><div class="w-12 h-12 rounded-xl ${colorData.bg.replace('bg-', 'bg-').replace('500', '100')} flex items-center justify-center ${colorData.text} text-2xl shadow-inner"><i class="ph-fill ph-pill"></i></div><div><h3 class="font-bold text-slate-800">${med.name}</h3><p class="text-xs font-bold text-indigo-500 animate-pulse">Due Today</p></div></div>`; } else { card.className += " bg-white border-slate-100 opacity-60 grayscale-[0.5]"; button.className += " bg-slate-100 text-slate-400"; if(status.status === 'skip') { button.disabled = true; button.textContent = "Rest"; } else { button.textContent = "Log"; } iconHTML = `<div class="flex items-center gap-4 z-10"><div class="w-12 h-12 rounded-xl bg-slate-100 flex items-center justify-center text-slate-400 text-2xl"><i class="ph-fill ph-pill"></i></div><div><h3 class="font-bold text-slate-600">${med.name}</h3><p class="text-xs text-slate-400">${status.text}</p></div></div>`; }
+                    card.insertAdjacentHTML('afterbegin', iconHTML); card.appendChild(button); container.appendChild(card);
                 });
+                const addBtn = document.createElement('button'); addBtn.onclick = () => window.app.openAddMedModal(); addBtn.className = "w-full py-3 mt-2 bg-white border-2 border-dashed border-slate-200 rounded-2xl text-slate-400 font-bold text-sm hover:border-indigo-300 hover:text-indigo-500 hover:bg-indigo-50 transition-all btn-press flex items-center justify-center gap-2 group"; addBtn.innerHTML = '<i class="ph-bold ph-plus-circle text-lg group-hover:scale-110 transition-transform"></i> Add Medication'; container.appendChild(addBtn);
             }
-            selectColor(name) { this.selectedColor = name; this.renderColorPicker(); }
-            toggleNotifications() { document.getElementById('notification-panel').classList.toggle('hidden'); }
-            toggleSettings() { document.getElementById('settings-modal').classList.toggle('hidden'); }
-            toggleScheduleInputs() { const type = document.getElementById('new-med-schedule-type').value; ['daily','alternate','weekly','monthly'].forEach(t => document.getElementById('input-'+t).classList.add('hidden')); document.getElementById('input-'+type).classList.remove('hidden'); }
+            renderGamification() { const stats = this.calculateStats(); const sEl = document.getElementById('streak-count'); if(sEl) sEl.textContent = stats.streak; const bEl = document.getElementById('best-streak-count'); if(bEl) bEl.textContent = stats.bestStreak; const icon = document.getElementById('streak-fire-icon'); const msg = document.getElementById('streak-message'); if(icon && msg) { if (stats.streak > 0) { icon.classList.add('text-orange-400', 'pulse-fire'); icon.classList.remove('text-slate-300'); msg.textContent = stats.streak > 3 ? "You're on fire! 🔥" : "Good start!"; } else { icon.classList.remove('text-orange-400', 'pulse-fire'); icon.classList.add('text-slate-300'); msg.textContent = "Start a streak today!"; } } const aEl = document.getElementById('adherence-rate'); if(aEl) aEl.textContent = stats.adherence + "%"; }
+            renderHistoryList() { const list = document.getElementById('history-list'); const prevBtn = document.getElementById('btn-prev-page'); const nextBtn = document.getElementById('btn-next-page'); const pageInd = document.getElementById('page-indicator'); list.innerHTML = ''; const allDates = Object.keys(this.state.logs).sort().reverse(); const totalPages = Math.ceil(allDates.length / this.ITEMS_PER_PAGE); const start = this.historyPage * this.ITEMS_PER_PAGE; const end = start + this.ITEMS_PER_PAGE; const pageDates = allDates.slice(start, end); pageInd.textContent = `${this.historyPage + 1} / ${totalPages || 1}`; prevBtn.disabled = this.historyPage === 0; nextBtn.disabled = end >= allDates.length; if (pageDates.length === 0) { list.innerHTML = '<div class="text-center text-slate-300 text-xs font-medium py-8">No medication history</div>'; return; } pageDates.forEach(date => { const dayLogs = this.state.logs[date]; if (!dayLogs) return; const d = new Date(date + 'T00:00:00'); const weekday = d.toLocaleDateString('en-US', { weekday: 'short' }); let pillsHtml = ''; Object.keys(dayLogs).forEach(medId => { const med = this.state.medications.find(m => m.id === medId); if (med) { const colorData = this.colors.find(c => c.name === med.color); pillsHtml += `<div class="w-2 h-2 rounded-full ${colorData.bg}"></div>`; } }); list.innerHTML += `<div class="flex items-center justify-between py-3 px-4 border-b border-slate-50 last:border-0 hover:bg-slate-50 transition-colors cursor-pointer group" onclick="window.app.openDayDetails('${date}')"><div class="flex items-center gap-3"><div class="flex flex-col items-center justify-center w-10 h-10 rounded-lg bg-slate-50 text-slate-500 font-bold group-hover:bg-indigo-50 group-hover:text-indigo-600 transition-colors"><span class="text-[9px] uppercase leading-none">${weekday}</span><span class="text-lg leading-none mt-0.5">${d.getDate()}</span></div><div class="flex gap-1.5">${pillsHtml}</div></div><i class="ph-bold ph-caret-right text-slate-300 group-hover:text-indigo-400"></i></div>`; }); }
+            renderCalendar() { const year = this.currentCalendarDate.getFullYear(); const month = this.currentCalendarDate.getMonth(); document.getElementById('calendar-month-title').textContent = this.currentCalendarDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' }); const firstDay = new Date(year, month, 1); const lastDay = new Date(year, month + 1, 0); const daysInMonth = lastDay.getDate(); const startDayIndex = firstDay.getDay(); const grid = document.getElementById('calendar-days'); grid.innerHTML = ''; for (let i = 0; i < startDayIndex; i++) grid.innerHTML += `<div></div>`; const todayDate = new Date(); todayDate.setHours(0,0,0,0); for (let day = 1; day <= daysInMonth; day++) { const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`; const currentLoopDate = new Date(year, month, day); const completion = this.getDayCompletionStatus(dateStr); const hasWeight = this.state.weightLogs[dateStr]; const hasNote = this.state.noteLogs[dateStr]; let colorClass = "bg-slate-50 text-slate-600 hover:bg-slate-100"; let isTodayClass = ""; if (currentLoopDate <= todayDate) { if (completion.required > 0) { if (completion.complete) colorClass = "bg-emerald-100 text-emerald-700 ring-1 ring-emerald-200 shadow-sm"; else if (completion.taken > 0) colorClass = "bg-amber-100 text-amber-700 ring-1 ring-amber-200 shadow-sm"; else colorClass = "bg-red-50 text-red-600 ring-1 ring-red-100"; } } if (dateStr === this.today) isTodayClass = "ring-2 ring-offset-2 ring-indigo-500 z-10 font-black"; let indicators = ''; if (hasWeight) indicators += `<div class="w-1 h-1 rounded-full bg-purple-400"></div>`; if (hasNote) indicators += `<div class="w-1 h-1 rounded-full bg-slate-400"></div>`; grid.innerHTML += `<div class="calendar-day ${colorClass} ${isTodayClass}" onclick="window.app.openDayDetails('${dateStr}')"><span class="mb-0.5">${day}</span><div class="dot-container flex gap-0.5">${indicators}</div></div>`; } }
+            openDayDetails(dateStr) { const modal = document.getElementById('day-details-modal'); const d = new Date(dateStr + 'T00:00:00'); const todayDate = new Date(); todayDate.setHours(0,0,0,0); const checkDate = new Date(dateStr + 'T00:00:00'); const isFuture = checkDate > todayDate; const isToday = checkDate.getTime() === todayDate.getTime(); document.getElementById('detail-date-title').textContent = d.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' }); const takenList = document.getElementById('detail-taken-list'); const missedList = document.getElementById('detail-missed-list'); const missedTitle = document.getElementById('detail-missed-title'); const journalSection = document.getElementById('detail-journal-section'); takenList.innerHTML = ''; missedList.innerHTML = ''; if (isFuture) { missedTitle.textContent = "Scheduled"; missedTitle.className = "text-[10px] font-bold text-blue-400 uppercase tracking-widest mb-3"; } else if (isToday) { missedTitle.textContent = "Due Today"; missedTitle.className = "text-[10px] font-bold text-indigo-400 uppercase tracking-widest mb-3"; } else { missedTitle.textContent = "Missed"; missedTitle.className = "text-[10px] font-bold text-red-400 uppercase tracking-widest mb-3"; } const dayLogs = this.state.logs[dateStr] || {}; const takenIds = Object.keys(dayLogs); if (takenIds.length === 0) takenList.innerHTML = '<div class="text-xs text-slate-400 italic font-medium">Nothing logged</div>'; takenIds.forEach(id => { const med = this.state.medications.find(m => m.id === id); if (med) takenList.innerHTML += `<div class="p-3 rounded-xl bg-emerald-50 border border-emerald-100 flex items-center gap-3"><i class="ph-fill ph-check-circle text-emerald-500 text-lg"></i><span class="text-sm font-bold text-slate-700">${med.name}</span></div>`; }); let missedCount = 0; let requiredCount = 0; (this.state.medications || []).filter(m => !m.deleted).forEach(med => { if (this.isDue(med, dateStr)) { requiredCount++; if (!takenIds.includes(med.id)) { let style = "bg-red-50 border-red-100 text-red-500"; let icon = "ph-warning-circle"; if (isFuture) { style = "bg-blue-50 border-blue-100 text-blue-500"; icon = "ph-clock"; } else if (isToday) { style = "bg-indigo-50 border-indigo-100 text-indigo-500"; icon = "ph-circle"; } missedList.innerHTML += `<div class="p-3 rounded-xl border ${style} flex items-center gap-3"><i class="ph-fill ${icon} text-lg"></i><span class="text-sm font-bold text-slate-700">${med.name}</span></div>`; missedCount++; } } }); if (missedCount === 0) { if (requiredCount === 0) missedList.innerHTML = '<div class="text-xs font-bold text-slate-400 flex items-center gap-1 bg-slate-50 inline-block px-2 py-1 rounded-lg">No medications scheduled</div>'; else if (!isFuture) missedList.innerHTML = '<div class="text-xs font-bold text-emerald-600 flex items-center gap-1 bg-emerald-50 inline-block px-2 py-1 rounded-lg">100% Complete</div>'; else missedList.innerHTML = '<div class="text-xs text-slate-400 italic font-medium">Nothing pending</div>'; } const w = this.state.weightLogs[dateStr]; const n = this.state.noteLogs[dateStr]; if (w || n) { journalSection.classList.remove('hidden'); let content = ''; if (w) content += `<div class="flex items-center gap-2 mb-2"><i class="ph-fill ph-scales text-purple-400"></i> <span class="font-bold">${w} ${this.state.userProfile.unit}</span></div>`; if (n) content += `<div class="flex items-start gap-2"><i class="ph-fill ph-notebook text-amber-400 mt-0.5"></i> <span class="italic">"${n}"</span></div>`; document.getElementById('detail-journal-content').innerHTML = content; } else { journalSection.classList.add('hidden'); } modal.classList.remove('hidden'); }
+            setChartRange(range) { this.chartRange = range; document.querySelectorAll('.chart-range-btn').forEach(btn => { if(btn.dataset.range === range) btn.className = "chart-range-btn text-[10px] font-bold px-2 py-1 rounded bg-indigo-100 text-indigo-600 transition-colors"; else btn.className = "chart-range-btn text-[10px] font-bold px-2 py-1 rounded bg-slate-100 text-slate-500 hover:bg-indigo-100 hover:text-indigo-600 transition-colors"; }); this.drawChart(); }
+            drawChart() { const canvas = document.getElementById('weight-chart'); if(!canvas) return; const ctx = canvas.getContext('2d'); const dpr = window.devicePixelRatio || 1; const rect = canvas.getBoundingClientRect(); canvas.width = rect.width * dpr; canvas.height = rect.height * dpr; ctx.scale(dpr, dpr); const w = rect.width; const h = rect.height; const now = new Date(); let cutoff = new Date(0); if (this.chartRange === '1m') cutoff.setMonth(now.getMonth() - 1); else if (this.chartRange === '3m') cutoff.setMonth(now.getMonth() - 3); else if (this.chartRange === '6m') cutoff.setMonth(now.getMonth() - 6); else if (this.chartRange === '1y') cutoff.setFullYear(now.getFullYear() - 1); const allData = Object.entries(this.state.weightLogs).sort((a,b) => a[0].localeCompare(b[0])); const data = allData.filter(d => new Date(d[0]) >= cutoff); ctx.clearRect(0,0,w,h); ctx.strokeStyle = "#f1f5f9"; ctx.lineWidth = 1; for(let i=1; i<5; i++) { let y = (h/5)*i; ctx.beginPath(); ctx.moveTo(40, y); ctx.lineTo(w, y); ctx.stroke(); } if(data.length === 0) { ctx.fillStyle = "#94a3b8"; ctx.font = "12px Inter"; ctx.textAlign = "center"; ctx.fillText("No data for this period", w/2+20, h/2); return; } const vals = data.map(d => d[1]); let min = Math.min(...vals); let max = Math.max(...vals); if(min === max) { min -= 2; max += 2; } else { const buf = (max-min)*0.1; min-=buf; max+=buf; } const range = max - min; const getX = (i) => (data.length === 1) ? (w/2 + 20) : (i / (data.length - 1)) * (w - 50) + 40; const getY = (v) => h - 20 - ((v - min) / range) * (h - 40); ctx.fillStyle = "#64748b"; ctx.font = "10px Inter"; ctx.textAlign = "right"; ctx.fillText(max.toFixed(1), 35, 20); ctx.fillText(min.toFixed(1), 35, h-20); ctx.fillText(((min+max)/2).toFixed(1), 35, h/2); if (data.length > 1) { ctx.beginPath(); ctx.strokeStyle = "#4f46e5"; ctx.lineWidth = 3; ctx.lineCap = "round"; ctx.lineJoin = "round"; data.forEach((d, i) => { const x = getX(i); const y = getY(d[1]); if(i===0) ctx.moveTo(x, y); else ctx.lineTo(x, y); }); ctx.stroke(); const grad = ctx.createLinearGradient(0, 0, 0, h); grad.addColorStop(0, "rgba(79, 70, 229, 0.2)"); grad.addColorStop(1, "rgba(79, 70, 229, 0)"); ctx.lineTo(getX(data.length-1), h); ctx.lineTo(getX(0), h); ctx.closePath(); ctx.fillStyle = grad; ctx.fill(); } ctx.fillStyle = "#fff"; ctx.strokeStyle = "#4f46e5"; ctx.lineWidth = 2; data.forEach((d, i) => { const x = getX(i); const y = getY(d[1]); ctx.beginPath(); ctx.arc(x, y, 4, 0, Math.PI*2); ctx.fill(); ctx.stroke(); }); ctx.fillStyle = "#94a3b8"; ctx.textAlign = "center"; if(data.length > 1) { ctx.fillText(new Date(data[0][0]).toLocaleDateString(undefined,{month:'short',day:'numeric'}), getX(0), h-5); ctx.fillText(new Date(data[data.length-1][0]).toLocaleDateString(undefined,{month:'short',day:'numeric'}), getX(data.length-1), h-5); } else { ctx.fillText(new Date(data[0][0]).toLocaleDateString(undefined,{month:'short',day:'numeric'}), getX(0), h-5); } canvas.onclick = (e) => { const rect = canvas.getBoundingClientRect(); const clickX = e.clientX - rect.left; let closest = null; let minDist = 999; data.forEach((d, i) => { const x = getX(i); const dist = Math.abs(x - clickX); if(dist < minDist) { minDist = dist; closest = d; } }); if(closest && minDist < 40) { const tip = document.getElementById('chart-tooltip'); const idx = data.indexOf(closest); tip.style.left = (getX(idx) + 10) + 'px'; tip.style.top = (getY(closest[1]) + 10) + 'px'; tip.textContent = `${closest[0].slice(5)}: ${closest[1]}`; tip.style.opacity = 1; setTimeout(() => tip.style.opacity = 0, 2000); } }; }
+            logJournalEntry() { const date = document.getElementById('journal-date').value; if(!date) return alert("Please select a date"); const weightVal = document.getElementById('weight-input').value; const noteVal = document.getElementById('note-input').value.trim(); let updated = false; if (weightVal) { this.state.weightLogs[date] = parseFloat(weightVal); updated = true; } if (noteVal) { if (this.state.noteLogs[date]) this.state.noteLogs[date] += "\n\n" + noteVal; else this.state.noteLogs[date] = noteVal; updated = true; } if(updated) { this.saveData(); this.showToast("Entry saved"); document.getElementById('note-input').value = ''; } }
+            deleteJournalEntry(date, type) { if(type === 'weight') delete this.state.weightLogs[date]; if(type === 'note') delete this.state.noteLogs[date]; this.saveData(); }
+            getBMI() { const h = parseFloat(this.state.userProfile.height); const dates = Object.keys(this.state.weightLogs).sort().reverse(); if (dates.length === 0) return null; return this.calculateBMI(this.state.weightLogs[dates[0]]); }
+            calculateBMI(weight) { const h = parseFloat(this.state.userProfile.height); if (!h || !weight) return null; let w = weight; if (this.state.userProfile.unit === 'lbs') w = weight * 0.453592; const hm = h / 100; const bmi = w / (hm * hm); let l = "Normal", c = "text-emerald-600 bg-emerald-50 border-emerald-100"; if (bmi < 18.5) { l = "Underweight"; c = "text-blue-600 bg-blue-50 border-blue-100"; } else if (bmi >= 25 && bmi < 30) { l = "Overweight"; c = "text-amber-600 bg-amber-50 border-amber-100"; } else if (bmi >= 30) { l = "Obese"; c = "text-red-600 bg-red-50 border-red-100"; } return { value: bmi.toFixed(1), label: l, color: c }; }
+            renderJournal() { document.getElementById('weight-unit-label').textContent = this.state.userProfile.unit; const dateInput = document.getElementById('journal-date'); if (!dateInput.value) dateInput.value = this.today; const selectedDate = dateInput.value; const w = this.state.weightLogs[selectedDate]; document.getElementById('weight-input').value = w || ''; const bmi = this.getBMI(); const badge = document.getElementById('bmi-badge'); if (bmi) { badge.classList.remove('hidden'); badge.setAttribute('class', `px-2.5 py-1 rounded-lg text-xs font-bold border ${bmi.color}`); badge.textContent = `BMI: ${bmi.value} (${bmi.label})`; document.getElementById('height-nudge').classList.add('hidden'); } else if (!this.state.userProfile.height) { badge.classList.add('hidden'); document.getElementById('height-nudge').classList.remove('hidden'); } const list = document.getElementById('journal-history-list'); list.innerHTML = ''; const allDates = new Set([...Object.keys(this.state.weightLogs), ...Object.keys(this.state.noteLogs)]); const sorted = Array.from(allDates).sort().reverse(); const ITEMS = 5; const total = Math.ceil(sorted.length/ITEMS); const start = this.journalPage*ITEMS; const end = start+ITEMS; const items = sorted.slice(start, end); document.getElementById('btn-j-prev').disabled = this.journalPage === 0; document.getElementById('btn-j-next').disabled = end >= sorted.length; if (items.length === 0) { list.innerHTML = '<div class="text-center text-slate-300 text-xs italic py-4">No entries yet</div>'; return; } items.forEach(date => { const w = this.state.weightLogs[date]; const n = this.state.noteLogs[date]; let bDis = ''; if (w && this.state.userProfile.height) { const b = this.calculateBMI(w); if(b) bDis = `<span class="text-[9px] font-bold ${b.color} px-1.5 py-0.5 rounded ml-2 border">BMI ${b.value}</span>`; } let html = `<div class="bg-white p-3 rounded-xl border border-slate-100 shadow-sm"><div class="flex justify-between items-center mb-1"><span class="text-xs font-bold text-slate-400">${date}</span><div class="flex gap-2">`; if(w) html += `<button onclick="window.app.deleteJournalEntry('${date}','weight')" class="text-[10px] text-red-300 hover:text-red-500 font-medium">Del W</button>`; if(n) html += `<button onclick="window.app.deleteJournalEntry('${date}','note')" class="text-[10px] text-red-300 hover:text-red-500 font-medium">Del N</button>`; html += `</div></div>`; if (w) html += `<div class="flex items-center mb-1"><i class="ph-fill ph-scales text-purple-400 mr-2"></i> <span class="font-bold text-slate-700 text-sm">${w} ${this.state.userProfile.unit}</span> ${bDis}</div>`; if (n) html += `<div class="flex items-start gap-2"><i class="ph-fill ph-notebook text-amber-400 mt-0.5"></i> <span class="text-xs text-slate-600 italic whitespace-pre-wrap">${n}</span></div>`; list.innerHTML += html + `</div>`; }); }
+            changeJournalPage(d) { this.journalPage += d; if(this.journalPage < 0) this.journalPage = 0; this.renderJournal(); }
             changeHistoryPage(d) { this.historyPage += d; if (this.historyPage < 0) this.historyPage = 0; this.renderHistoryList(); }
             changeMonth(d) { this.currentCalendarDate.setMonth(this.currentCalendarDate.getMonth() + d); this.renderCalendar(); }
             resizeCanvas() { this.confettiCanvas.width = window.innerWidth; this.confettiCanvas.height = window.innerHeight; this.drawChart(); }
@@ -890,20 +543,24 @@
             showToast(msg) { const t = document.getElementById('toast'); document.getElementById('toast-msg').textContent = msg; t.classList.remove('translate-y-20', 'opacity-0'); setTimeout(() => t.classList.add('translate-y-20', 'opacity-0'), 2500); }
             fireConfetti() { const particles = []; const colors = ['#4f46e5', '#ec4899', '#10b981', '#f59e0b']; for (let i = 0; i < 100; i++) particles.push({ x: window.innerWidth/2, y: window.innerHeight/2, vx: (Math.random()-0.5)*20, vy: (Math.random()-1)*20, size: Math.random()*8+4, color: colors[Math.floor(Math.random()*colors.length)], life: 100, gravity: 0.6 }); const animate = () => { this.ctx.clearRect(0,0,window.innerWidth,window.innerHeight); let active = false; particles.forEach(p => { if(p.life>0){ active=true; p.x+=p.vx; p.y+=p.vy; p.vy+=p.gravity; p.life--; p.size*=0.96; this.ctx.fillStyle=p.color; this.ctx.beginPath(); this.ctx.arc(p.x,p.y,p.size,0,Math.PI*2); this.ctx.fill(); } }); if(active) requestAnimationFrame(animate); }; animate(); }
             renderNotifications() { const panel = document.getElementById('notification-list'); const badge = document.getElementById('notif-badge'); panel.innerHTML = ''; let dueCount = 0; (this.state.medications || []).filter(m => !m.deleted).forEach(med => { const status = this.checkStatus(med); if (status.status === 'due' || (status.status === 'neutral' && med.schedule === 'daily')) { if (!(this.state.logs[this.today] && this.state.logs[this.today][med.id])) { dueCount++; panel.innerHTML += `<div class="flex items-center justify-between p-2.5 hover:bg-slate-50 rounded-xl mb-1 border border-transparent hover:border-slate-100 transition-colors"><span class="text-sm font-bold text-slate-700">${med.name}</span><button onclick="window.app.toggleLog('${med.id}')" class="text-xs font-bold text-white bg-indigo-500 hover:bg-indigo-600 px-3 py-1.5 rounded-full shadow-sm">Take</button></div>`; } } }); if (dueCount > 0) { badge.classList.remove('hidden'); if(panel.innerHTML === '') panel.innerHTML = '<div class="text-xs text-slate-400 p-2">All caught up!</div>'; } else { badge.classList.add('hidden'); panel.innerHTML = '<div class="text-center text-sm font-medium text-slate-400 py-6">All meds taken!</div>'; } }
-            
-            openAddMedModal() { document.getElementById('new-med-name').value = ''; document.getElementById('new-med-schedule-type').value = 'daily'; document.getElementById('new-med-start-date').value = this.today; document.getElementById('new-med-month-day').value = ''; document.querySelectorAll('.day-checkbox').forEach(cb => cb.checked = false); this.toggleScheduleInputs(); this.selectedColor = 'blue'; this.renderColorPicker(); document.getElementById('add-med-modal').classList.remove('hidden'); }
-            saveNewMedication() { const name = document.getElementById('new-med-name').value.trim(); const type = document.getElementById('new-med-schedule-type').value; if (!name) return alert("Please enter a name"); let details = {}; if (type === 'alternate') details.startDate = document.getElementById('new-med-start-date').value; else if (type === 'weekly') { const checkboxes = document.querySelectorAll('.day-checkbox:checked'); if (checkboxes.length === 0) return alert("Select at least one day"); details.days = Array.from(checkboxes).map(cb => parseInt(cb.value)); } else if (type === 'monthly') { const dayVal = document.getElementById('new-med-month-day').value; if(!dayVal || dayVal < 1 || dayVal > 31) return alert("Please enter a valid day (1-31)"); details.dayOfMonth = parseInt(dayVal); } this.state.medications.push({ id: 'med_'+Date.now(), name, color: this.selectedColor, schedule: type, scheduleDetails: details }); this.saveData(); document.getElementById('add-med-modal').classList.add('hidden'); this.showToast("Added!"); }
-            deleteMedication(id) { this.showConfirm("Archive this medication? History will be kept.", () => { const medIndex = this.state.medications.findIndex(m => m.id === id); if (medIndex !== -1) { this.state.medications[medIndex].deleted = true; this.saveData(); } }); }
-            exportJSON() { const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(this.state)); const node = document.createElement('a'); node.setAttribute("href", dataStr); node.setAttribute("download", "med_tracker_backup.json"); document.body.appendChild(node); node.click(); node.remove(); }
-            importData(input) { const file = input.files[0]; if(!file) return; const reader = new FileReader(); reader.onload = (e) => { try { const json = JSON.parse(e.target.result); if(json.medications) { this.state = json; if(!json.version || json.version < 6) this.migrateToV4(json); this.saveData(); this.showToast("Restored!"); this.toggleSettings(); } } catch { alert("Invalid"); } }; reader.readAsText(file); }
-            clearAllData() { this.showConfirm("Reset everything? This cannot be undone.", () => { localStorage.removeItem('medTrackerData'); localStorage.removeItem('medTracker_hasSeenHelp'); location.reload(); }); }
-            generateMockData() { this.showConfirm("Overwrite with 100 days of test data?", () => { this.state.logs = {}; this.state.weightLogs = {}; this.state.noteLogs = {}; const meds = (this.state.medications || []).filter(m => !m.deleted); const today = new Date(); for (let i = 0; i < 100; i++) { const d = new Date(); d.setDate(today.getDate() - i); const dateStr = new Date(d.getTime() - d.getTimezoneOffset()*60000).toISOString().split('T')[0]; this.state.logs[dateStr] = {}; meds.forEach(med => { if (this.isDue(med, dateStr)) { if (Math.random() > 0.1) this.state.logs[dateStr][med.id] = { timestamp: Date.now(), value: true }; } }); if (Object.keys(this.state.logs[dateStr]).length === 0) delete this.state.logs[dateStr]; if (Math.random() > 0.7) this.state.weightLogs[dateStr] = (70 + Math.random() * 2).toFixed(1); if (Math.random() > 0.8) this.state.noteLogs[dateStr] = "Feeling great today!"; } this.saveData(); this.showToast("Test data generated"); this.toggleSettings(); }); }
-            generateCalendar() { let icsContent = "BEGIN:VCALENDAR\nVERSION:2.0\nPRODID:-//MedTracker//App//EN\n"; const currentUrl = window.location.href; (this.state.medications || []).filter(m => !m.deleted).forEach(med => { let start = new Date(); start.setHours(9, 0, 0, 0); let rrule = ""; let isValid = true; if (med.schedule === 'daily') rrule = "FREQ=DAILY"; else if (med.schedule === 'weekly') { const daysMap = ['SU', 'MO', 'TU', 'WE', 'TH', 'FR', 'SA']; const selectedDays = med.scheduleDetails.days.map(d => daysMap[d]).join(','); rrule = `FREQ=WEEKLY;BYDAY=${selectedDays}`; } else if (med.schedule === 'monthly') { const dayOfMonth = med.scheduleDetails.dayOfMonth; start.setDate(dayOfMonth); if (start < new Date()) start.setMonth(start.getMonth() + 1); rrule = `FREQ=MONTHLY;BYMONTHDAY=${dayOfMonth}`; } else if (med.schedule === 'alternate') { const genesisStr = med.scheduleDetails.startDate; if (!genesisStr) { isValid = false; } else { const genesis = new Date(genesisStr + 'T00:00:00'); const todayStr = this.getLocalDateString(); const checkDate = new Date(todayStr + 'T00:00:00'); const diffTime = checkDate - genesis; const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24)); if (diffDays % 2 !== 0) start.setDate(start.getDate() + 1); rrule = "FREQ=DAILY;INTERVAL=2"; } } if (isValid) { const pad = (n) => n < 10 ? '0' + n : n; const dateString = `${start.getFullYear()}${pad(start.getMonth() + 1)}${pad(start.getDate())}T090000`; icsContent += "BEGIN:VEVENT\n"; icsContent += `UID:${med.id}@medtracker.local\n`; icsContent += `DTSTART:${dateString}\n`; if(rrule) icsContent += `RRULE:${rrule}\n`; icsContent += `SUMMARY:Take ${med.name}\n`; icsContent += `DESCRIPTION:Log dose here: ${currentUrl}\n`; icsContent += "BEGIN:VALARM\nTRIGGER:-PT0M\nACTION:DISPLAY\nDESCRIPTION:Reminder\nEND:VALARM\n"; icsContent += "END:VEVENT\n"; } }); icsContent += "END:VCALENDAR"; const blob = new Blob([icsContent], { type: 'text/calendar' }); const url = window.URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = "med_schedule.ics"; document.body.appendChild(a); a.click(); document.body.removeChild(a); window.URL.revokeObjectURL(url); this.showToast("Calendar file generated!"); }
+            initWeekCheckboxes() { const c = document.getElementById('week-checkboxes'); c.innerHTML = ''; ['S','M','T','W','T','F','S'].forEach((d,i) => { let val = i; if(i===0) val=0; else val=i; c.innerHTML += `<label class="cursor-pointer group"><input type="checkbox" class="hidden day-checkbox" value="${val}"><div class="w-9 h-9 rounded-full border border-slate-200 bg-white flex items-center justify-center text-xs font-bold text-slate-400 transition-all group-hover:border-indigo-200">${d}</div></label>`; }); }
+            renderSettingsList() { const list = document.getElementById('settings-med-list'); list.innerHTML = ''; (this.state.medications || []).filter(m => !m.deleted).forEach(med => { const colorData = this.colors.find(c => c.name === med.color); let scheduleText = med.schedule; if (med.schedule === 'weekly') scheduleText = "Weekly"; if (med.schedule === 'monthly') scheduleText = "Monthly"; if (med.schedule === 'alternate') scheduleText = "Every Other Day"; list.innerHTML += `<div class="flex items-center justify-between p-3.5 bg-slate-50 hover:bg-slate-100 rounded-2xl transition-colors group"><div class="flex items-center gap-3.5"><div class="w-10 h-10 rounded-xl ${colorData.bg} flex items-center justify-center text-white shadow-sm"><span class="font-bold text-sm">${med.name[0]}</span></div><div><div class="font-bold text-sm text-slate-700">${med.name}</div><div class="text-[10px] font-bold text-slate-400 uppercase tracking-wide">${scheduleText}</div></div></div><button onclick="window.app.deleteMedication('${med.id}')" class="w-8 h-8 flex items-center justify-center text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-full transition-all"><i class="ph-bold ph-trash"></i></button></div>`; }); }
+            renderColorPicker() { const container = document.getElementById('color-picker'); if (!container) return; container.innerHTML = ''; this.colors.forEach(c => { const isSelected = this.selectedColor === c.name; container.innerHTML += `<button onclick="window.app.selectColor('${c.name}')" class="w-8 h-8 rounded-full ${c.bg} ${isSelected ? 'ring-2 ring-offset-2 ring-slate-400 scale-110' : 'opacity-70 hover:opacity-100'} transition-all shrink-0"></button>`; }); }
+            selectColor(name) { this.selectedColor = name; this.renderColorPicker(); }
+            toggleNotifications() { document.getElementById('notification-panel').classList.toggle('hidden'); }
+            toggleSettings() { document.getElementById('settings-modal').classList.toggle('hidden'); }
+            toggleScheduleInputs() { const type = document.getElementById('new-med-schedule-type').value; ['daily','alternate','weekly','monthly'].forEach(t => document.getElementById('input-'+t).classList.add('hidden')); document.getElementById('input-'+type).classList.remove('hidden'); }
             checkBrowserPermission() { const icon = document.getElementById('browser-notif-icon'); if(!icon) return; if (!("Notification" in window)) { icon.className = "ph-bold ph-x-circle text-2xl text-red-300"; return; } if (Notification.permission === "granted") icon.className = "ph-fill ph-toggle-right text-2xl text-green-500"; else if (Notification.permission === "denied") icon.className = "ph-bold ph-toggle-left text-2xl text-red-300"; else icon.className = "ph-bold ph-toggle-left text-2xl text-slate-300"; }
             requestBrowserNotifications() { if (!("Notification" in window)) return alert("This browser does not support notifications."); Notification.requestPermission().then(permission => { this.checkBrowserPermission(); if (permission === "granted") { new Notification("Notifications Enabled", { body: "You will receive alerts when the app is open.", icon: "https://unpkg.com/@phosphor-icons/core@2.0.0/assets/fill/pill-fill.svg" }); } }); }
             showConfirm(msg, callback) { document.getElementById('confirm-msg').textContent = msg; this.pendingAction = callback; document.getElementById('confirm-modal').classList.remove('hidden'); }
             closeConfirm() { document.getElementById('confirm-modal').classList.add('hidden'); this.pendingAction = null; }
             confirmAction() { if (this.pendingAction) this.pendingAction(); this.closeConfirm(); }
+            exportJSON() { const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(this.state)); const node = document.createElement('a'); node.setAttribute("href", dataStr); node.setAttribute("download", "med_tracker_backup.json"); document.body.appendChild(node); node.click(); node.remove(); }
+            exportCSV() { let csv = "Date,Medication,Status\n"; Object.keys(this.state.logs).sort().reverse().forEach(d => { Object.keys(this.state.logs[d]).forEach(id => { const m = this.state.medications.find(x => x.id === id); csv += `${d},${m ? m.name : 'Unknown'},Taken\n`; }); }); const node = document.createElement('a'); node.setAttribute("href", "data:text/csv;charset=utf-8," + encodeURIComponent(csv)); node.setAttribute("download", "med_history.csv"); document.body.appendChild(node); node.click(); node.remove(); }
+            importData(input) { const file = input.files[0]; if(!file) return; const reader = new FileReader(); reader.onload = (e) => { try { const json = JSON.parse(e.target.result); if(json.medications) { this.state = json; if(!json.version || json.version < 6) this.migrateToV4(json); this.saveData(); this.showToast("Restored!"); this.toggleSettings(); } } catch { alert("Invalid"); } }; reader.readAsText(file); }
+            clearAllData() { this.showConfirm("Reset everything? This cannot be undone.", () => { localStorage.removeItem('medTrackerData'); localStorage.removeItem('medTracker_hasSeenHelp'); location.reload(); }); }
+            generateMockData() { this.showConfirm("Overwrite with 100 days of test data?", () => { this.state.logs = {}; this.state.weightLogs = {}; this.state.noteLogs = {}; const meds = (this.state.medications || []).filter(m => !m.deleted); const today = new Date(); for (let i = 0; i < 100; i++) { const d = new Date(); d.setDate(today.getDate() - i); const dateStr = new Date(d.getTime() - d.getTimezoneOffset()*60000).toISOString().split('T')[0]; this.state.logs[dateStr] = {}; meds.forEach(med => { if (this.isDue(med, dateStr)) { if (Math.random() > 0.1) this.state.logs[dateStr][med.id] = { timestamp: Date.now(), value: true }; } }); if (Object.keys(this.state.logs[dateStr]).length === 0) delete this.state.logs[dateStr]; if (Math.random() > 0.7) this.state.weightLogs[dateStr] = (70 + Math.random() * 2).toFixed(1); if (Math.random() > 0.8) this.state.noteLogs[dateStr] = "Feeling great today!"; } this.saveData(); this.showToast("Test data generated"); this.toggleSettings(); }); }
+            generateCalendar() { let icsContent = "BEGIN:VCALENDAR\nVERSION:2.0\nPRODID:-//MedTracker//App//EN\n"; const currentUrl = window.location.href; (this.state.medications || []).filter(m => !m.deleted).forEach(med => { let start = new Date(); start.setHours(9, 0, 0, 0); let rrule = ""; let isValid = true; if (med.schedule === 'daily') rrule = "FREQ=DAILY"; else if (med.schedule === 'weekly') { const daysMap = ['SU', 'MO', 'TU', 'WE', 'TH', 'FR', 'SA']; const selectedDays = med.scheduleDetails.days.map(d => daysMap[d]).join(','); rrule = `FREQ=WEEKLY;BYDAY=${selectedDays}`; } else if (med.schedule === 'monthly') { const dayOfMonth = med.scheduleDetails.dayOfMonth; start.setDate(dayOfMonth); if (start < new Date()) start.setMonth(start.getMonth() + 1); rrule = `FREQ=MONTHLY;BYMONTHDAY=${dayOfMonth}`; } else if (med.schedule === 'alternate') { const genesisStr = med.scheduleDetails.startDate; if (!genesisStr) { isValid = false; } else { const genesis = new Date(genesisStr + 'T00:00:00'); const todayStr = this.getLocalDateString(); const checkDate = new Date(todayStr + 'T00:00:00'); const diffTime = checkDate - genesis; const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24)); if (diffDays % 2 !== 0) start.setDate(start.getDate() + 1); rrule = "FREQ=DAILY;INTERVAL=2"; } } if (isValid) { const pad = (n) => n < 10 ? '0' + n : n; const dateString = `${start.getFullYear()}${pad(start.getMonth() + 1)}${pad(start.getDate())}T090000`; icsContent += "BEGIN:VEVENT\n"; icsContent += `UID:${med.id}@medtracker.local\n`; icsContent += `DTSTART:${dateString}\n`; if(rrule) icsContent += `RRULE:${rrule}\n`; icsContent += `SUMMARY:Take ${med.name}\n`; icsContent += `DESCRIPTION:Log dose here: ${currentUrl}\n`; icsContent += "BEGIN:VALARM\nTRIGGER:-PT0M\nACTION:DISPLAY\nDESCRIPTION:Reminder\nEND:VALARM\n"; icsContent += "END:VEVENT\n"; } }); icsContent += "END:VCALENDAR"; const blob = new Blob([icsContent], { type: 'text/calendar' }); const url = window.URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = "med_schedule.ics"; document.body.appendChild(a); a.click(); document.body.removeChild(a); window.URL.revokeObjectURL(url); this.showToast("Calendar file generated!"); }
         }
         document.addEventListener('DOMContentLoaded', () => {
             window.app = new MedTracker();
