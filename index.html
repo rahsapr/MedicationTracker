@@ -341,7 +341,7 @@
                     <button onclick="window.app.clearAllData()" class="w-full p-3.5 text-red-600 bg-red-50 hover:bg-red-100 border border-red-100 rounded-xl text-sm font-bold transition-colors btn-press">
                         Reset App Data
                     </button>
-                    <p class="text-center text-[10px] font-bold text-slate-300 mt-4 uppercase tracking-widest">v5.8.1 • Smart Archive</p>
+                    <p class="text-center text-[10px] font-bold text-slate-300 mt-4 uppercase tracking-widest">v5.10.0 • Crash Fix</p>
                 </section>
             </div>
         </div>
@@ -461,8 +461,8 @@
 
     <script>
         /**
-         * Medication Tracker Application Logic v5.8.1
-         * Feature: Soft Deletes (Archiving) + Empty State UI + Fixes
+         * Medication Tracker Application Logic v5.10.0
+         * Feature: Infinite Loop Bug Fix in calculateStats & Data robustness
          */
         class MedTracker {
             constructor() {
@@ -471,6 +471,7 @@
                 const offset = y.getTimezoneOffset() * 60000;
                 const yesterday = new Date(y.getTime() - offset).toISOString().split('T')[0];
 
+                // Default State (Fallback)
                 this.state = {
                     version: 5, logs: {}, bestStreak: 0,
                     medications: [
@@ -501,16 +502,30 @@
             }
 
             init() {
-                this.loadData();
-                this.renderColorPicker();
-                this.resizeCanvas();
-                window.addEventListener('resize', () => this.resizeCanvas());
-                this.renderUI();
-                this.setupInputs();
-                const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-                document.getElementById('current-date-display').textContent = new Date().toLocaleDateString('en-US', options);
-                document.getElementById('confirm-yes-btn').onclick = () => this.confirmAction();
-                this.checkBrowserPermission();
+                try {
+                    this.loadData();
+                    // Additional safety check: Ensure medications is an array
+                    if (!Array.isArray(this.state.medications)) {
+                        console.warn("Medications state corrupted, resetting to empty array.");
+                        this.state.medications = [];
+                    }
+                    this.renderColorPicker();
+                    this.resizeCanvas();
+                    window.addEventListener('resize', () => this.resizeCanvas());
+                    this.renderUI();
+                    this.setupInputs();
+                    const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+                    document.getElementById('current-date-display').textContent = new Date().toLocaleDateString('en-US', options);
+                    document.getElementById('confirm-yes-btn').onclick = () => this.confirmAction();
+                    this.checkBrowserPermission();
+                } catch (e) {
+                    console.error("Critical initialization error:", e);
+                    // Emergency Reset if app crashes on load
+                    if (confirm("The app encountered an error loading your data. Reset to default settings to fix this?")) {
+                        localStorage.removeItem('medTrackerData');
+                        location.reload();
+                    }
+                }
             }
 
             setupInputs() { document.getElementById('new-med-start-date').value = this.today; }
@@ -518,10 +533,27 @@
 
             loadData() {
                 const saved = localStorage.getItem('medTrackerData');
-                if (saved) { try { const parsed = JSON.parse(saved); if(!parsed.version || parsed.version < 4) this.migrateToV4(parsed); else this.state = { ...this.state, ...parsed }; } catch (e) { console.error(e); } }
+                if (saved) { 
+                    try { 
+                        const parsed = JSON.parse(saved); 
+                        if(!parsed.version || parsed.version < 4) {
+                            this.migrateToV4(parsed); 
+                        } else { 
+                            // Merge logic with type safety checks
+                            this.state = { ...this.state, ...parsed }; 
+                            // Ensure arrays are arrays (fixes the crash if medications was saved as null/undefined)
+                            if (!Array.isArray(this.state.medications)) this.state.medications = [];
+                            if (!this.state.logs) this.state.logs = {};
+                        } 
+                    } catch (e) { 
+                        console.error("Data load error", e); 
+                    } 
+                }
             }
             migrateToV4(oldData) {
                 let meds = oldData.medications || [];
+                // Ensure meds is an array even during migration
+                if (!Array.isArray(meds)) meds = [];
                 meds = meds.map(m => { if (!m.scheduleDetails) { let details = {}; if (m.schedule === 'alternate') details.startDate = this.today; return { ...m, scheduleDetails: details }; } return m; });
                 this.state = { version: 4, logs: oldData.logs || {}, bestStreak: oldData.bestStreak || 0, medications: meds };
                 this.saveData();
@@ -562,22 +594,34 @@
             }
 
             calculateStats() {
+                // FIXED: Handle case where ALL meds are deleted/archived
+                const activeMeds = (this.state.medications || []).filter(m => !m.deleted);
+                if (activeMeds.length === 0) {
+                    return { streak: 0, bestStreak: this.state.bestStreak, adherence: 0 };
+                }
+
                 let streak = 0;
                 let checkDate = new Date();
                 const todayStatus = this.getDayCompletionStatus(this.today);
                 if (!todayStatus.complete && todayStatus.required > 0) checkDate.setDate(checkDate.getDate() - 1);
 
-                while (true) {
+                // FIXED: Safety limit for loop to prevent browser freeze
+                let safetyLimit = 1000; 
+                while (safetyLimit-- > 0) {
                     const dateStr = checkDate.toISOString().split('T')[0];
                     const status = this.getDayCompletionStatus(dateStr);
-                    if (status.required === 0) {} 
+                    if (status.required === 0) {
+                        // Skip days count as bridge? Or break?
+                        // Usually empty days bridge streak. We continue.
+                    } 
                     else if (status.complete) streak++;
                     else break;
+                    
                     checkDate.setDate(checkDate.getDate() - 1);
-                    if (streak > 3650) break; 
                 }
                 if (streak > (this.state.bestStreak || 0)) this.state.bestStreak = streak;
 
+                // Monthly Adherence
                 const now = new Date();
                 const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
                 let daysChecked = 0;
@@ -602,7 +646,8 @@
                 const takenIds = Object.keys(logs);
                 let required = 0;
                 let taken = 0;
-                this.state.medications.filter(m => !m.deleted).forEach(med => {
+                // Safe access to medications array
+                (this.state.medications || []).filter(m => !m.deleted).forEach(med => {
                     if (this.isDue(med, dateStr)) {
                         required++;
                         if (takenIds.includes(med.id)) taken++;
@@ -677,7 +722,8 @@
             renderDashboard() {
                 const container = document.getElementById('medication-cards-container');
                 container.innerHTML = '';
-                const activeMeds = this.state.medications.filter(m => !m.deleted);
+                // Safety check: ensure filter works even if medications is empty/null
+                const activeMeds = (this.state.medications || []).filter(m => !m.deleted);
 
                 // EMPTY STATE
                 if (activeMeds.length === 0) {
