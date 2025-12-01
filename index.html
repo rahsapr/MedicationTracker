@@ -284,7 +284,7 @@
                         <button onclick="window.app.generateCalendar()" class="flex items-center justify-center gap-2 p-3.5 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 border border-indigo-100 rounded-xl text-sm font-bold btn-press transition-colors">
                             <i class="ph-bold ph-calendar-plus"></i> Add to Phone Calendar
                         </button>
-                        <p class="text-[10px] text-slate-400 px-1">"Add to Phone Calendar" creates a schedule you can import to Google/Apple Calendar. Events include a link to check off meds here.</p>
+                        <p class="text-[10px] text-slate-400 px-1">"Add to Phone Calendar" creates a <b>recurring series</b> for your meds. This lets you manage or delete the entire schedule easily from your calendar app.</p>
                     </div>
                 </section>
 
@@ -341,7 +341,7 @@
                     <button onclick="window.app.clearAllData()" class="w-full p-3.5 text-red-600 bg-red-50 hover:bg-red-100 border border-red-100 rounded-xl text-sm font-bold transition-colors btn-press">
                         Reset App Data
                     </button>
-                    <p class="text-center text-[10px] font-bold text-slate-300 mt-4 uppercase tracking-widest">v5.6.0 • ICS Link Sync</p>
+                    <p class="text-center text-[10px] font-bold text-slate-300 mt-4 uppercase tracking-widest">v5.7.0 • Recurring Sync</p>
                 </section>
             </div>
         </div>
@@ -461,8 +461,8 @@
 
     <script>
         /**
-         * Medication Tracker Application Logic v5.6.0
-         * Feature: Notifications (Browser + Calendar Export with Deep Link)
+         * Medication Tracker Application Logic v5.7.0
+         * Feature: Smart Recurring Calendar Export
          */
         class MedTracker {
             constructor() {
@@ -548,7 +548,6 @@
                 });
             }
 
-            // Simple check on load to see if things are due
             scheduleLocalNotification() {
                 if (Notification.permission !== "granted") return;
                 const dueMeds = this.state.medications.filter(med => {
@@ -557,35 +556,70 @@
                 });
             }
 
-            // --- Calendar Export Logic (The "Offline Push" with Links) ---
+            // --- RECURRING CALENDAR EXPORT (SMART SERIES) ---
             generateCalendar() {
                 let icsContent = "BEGIN:VCALENDAR\nVERSION:2.0\nPRODID:-//MedTracker//App//EN\n";
-                const daysToExport = 30; // Next 30 days
-                const today = new Date();
-                const currentUrl = window.location.href; // Capture current URL
+                const currentUrl = window.location.href;
 
-                for (let i = 0; i < daysToExport; i++) {
-                    const d = new Date(today);
-                    d.setDate(today.getDate() + i);
-                    const offset = d.getTimezoneOffset() * 60000;
-                    const dateStr = new Date(d.getTime() - offset).toISOString().split('T')[0];
-                    const dateStrClean = dateStr.replace(/-/g, ''); // YYYYMMDD
+                this.state.medications.forEach(med => {
+                    // Logic to find the correct DTSTART and RRULE
+                    let start = new Date(); // Default start today
+                    start.setHours(9, 0, 0, 0); // 9 AM
+                    let rrule = "";
+                    let isValid = true;
 
-                    this.state.medications.forEach(med => {
-                        if (this.isDue(med, dateStr)) {
-                            // Event at 9:00 AM
-                            icsContent += "BEGIN:VEVENT\n";
-                            // Add UID for de-duplication
-                            icsContent += `UID:${med.id}-${dateStrClean}@medtracker.local\n`;
-                            icsContent += `DTSTART;VALUE=DATE:${dateStrClean}\n`; // All day event
-                            icsContent += `SUMMARY:Take ${med.name}\n`;
-                            icsContent += `DESCRIPTION:Tap to log dose: ${currentUrl}\n`; // Link back to app
-                            icsContent += "TRANSP:TRANSPARENT\n"; // Available
-                            icsContent += "BEGIN:VALARM\nTRIGGER:-PT15H\nACTION:DISPLAY\nDESCRIPTION:Reminder\nEND:VALARM\n"; // 9am alert
-                            icsContent += "END:VEVENT\n";
+                    if (med.schedule === 'daily') {
+                        rrule = "FREQ=DAILY";
+                    } 
+                    else if (med.schedule === 'weekly') {
+                        // Map internal 0-6 (Sun-Sat) to iCal SU,MO,TU...
+                        const daysMap = ['SU', 'MO', 'TU', 'WE', 'TH', 'FR', 'SA'];
+                        const selectedDays = med.scheduleDetails.days.map(d => daysMap[d]).join(',');
+                        rrule = `FREQ=WEEKLY;BYDAY=${selectedDays}`;
+                    }
+                    else if (med.schedule === 'monthly') {
+                        const dayOfMonth = med.scheduleDetails.dayOfMonth;
+                        // Move start date to the correct day of this month
+                        start.setDate(dayOfMonth);
+                        // If that day passed, start next month
+                        if (start < new Date()) start.setMonth(start.getMonth() + 1);
+                        rrule = `FREQ=MONTHLY;BYMONTHDAY=${dayOfMonth}`;
+                    }
+                    else if (med.schedule === 'alternate') {
+                        const genesisStr = med.scheduleDetails.startDate;
+                        if (!genesisStr) { isValid = false; } else {
+                            const genesis = new Date(genesisStr + 'T00:00:00');
+                            const todayStr = this.getLocalDateString();
+                            const checkDate = new Date(todayStr + 'T00:00:00');
+                            
+                            // Check diff to see if due today or tomorrow
+                            const diffTime = checkDate - genesis;
+                            const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+                            
+                            if (diffDays % 2 !== 0) {
+                                // Not due today, due tomorrow
+                                start.setDate(start.getDate() + 1);
+                            }
+                            rrule = "FREQ=DAILY;INTERVAL=2";
                         }
-                    });
-                }
+                    }
+
+                    if (isValid) {
+                        // Format: YYYYMMDDTHHMMSS
+                        const pad = (n) => n < 10 ? '0' + n : n;
+                        const dateString = `${start.getFullYear()}${pad(start.getMonth() + 1)}${pad(start.getDate())}T090000`;
+
+                        icsContent += "BEGIN:VEVENT\n";
+                        icsContent += `UID:${med.id}@medtracker.local\n`; // Consistent UID for updates
+                        icsContent += `DTSTART:${dateString}\n`;
+                        if(rrule) icsContent += `RRULE:${rrule}\n`;
+                        icsContent += `SUMMARY:Take ${med.name}\n`;
+                        icsContent += `DESCRIPTION:Log dose here: ${currentUrl}\n`;
+                        icsContent += "BEGIN:VALARM\nTRIGGER:-PT0M\nACTION:DISPLAY\nDESCRIPTION:Reminder\nEND:VALARM\n";
+                        icsContent += "END:VEVENT\n";
+                    }
+                });
+
                 icsContent += "END:VCALENDAR";
 
                 const blob = new Blob([icsContent], { type: 'text/calendar' });
