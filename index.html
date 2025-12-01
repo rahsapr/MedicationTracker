@@ -79,8 +79,8 @@
 
         /* Calendar Grid */
         .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
-        .calendar-day { aspect-ratio: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; border-radius: 12px; font-size: 0.85rem; font-weight: 600; cursor: pointer; transition: all 0.2s; }
-        .calendar-day:active { transform: scale(0.95); }
+        .calendar-day { aspect-ratio: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; border-radius: 12px; font-size: 0.9rem; cursor: pointer; transition: background-color 0.2s; }
+        .calendar-day:active { background-color: #f1f5f9; }
         .dot-container { display: flex; gap: 3px; margin-top: 3px; justify-content: center; flex-wrap: wrap; max-width: 100%; }
         .dot { width: 5px; height: 5px; border-radius: 50%; }
 
@@ -272,6 +272,22 @@
             <!-- Scrollable Content -->
             <div class="overflow-y-auto p-6 space-y-8 pb-10">
                 
+                <!-- Notifications & Sync -->
+                <section>
+                    <h3 class="font-bold text-lg text-slate-800 mb-3">Reminders</h3>
+                    <div class="grid grid-cols-1 gap-3">
+                        <button onclick="window.app.requestBrowserNotifications()" class="flex items-center justify-between p-3.5 bg-slate-50 hover:bg-slate-100 rounded-xl transition-colors btn-press">
+                            <span class="text-sm font-bold text-slate-600 flex items-center gap-2"><i class="ph-bold ph-browser text-indigo-500"></i> Browser Popups (App Open)</span>
+                            <i class="ph-bold ph-toggle-left text-2xl text-slate-300" id="browser-notif-icon"></i>
+                        </button>
+                        
+                        <button onclick="window.app.generateCalendar()" class="flex items-center justify-center gap-2 p-3.5 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 border border-indigo-100 rounded-xl text-sm font-bold btn-press transition-colors">
+                            <i class="ph-bold ph-calendar-plus"></i> Add to Phone Calendar
+                        </button>
+                        <p class="text-[10px] text-slate-400 px-1">"Add to Phone Calendar" creates a schedule you can import to Google/Apple Calendar. Events include a link to check off meds here.</p>
+                    </div>
+                </section>
+
                 <!-- Adherence Stats -->
                 <section class="bg-indigo-50 p-5 rounded-2xl border border-indigo-100 relative overflow-hidden">
                     <div class="absolute right-0 top-0 w-24 h-24 bg-indigo-200/50 rounded-full blur-2xl -translate-y-8 translate-x-8"></div>
@@ -319,10 +335,13 @@
 
                 <!-- Danger Zone -->
                 <section class="pt-6 border-t border-slate-100">
+                    <button onclick="window.app.generateMockData()" class="w-full mb-3 p-3.5 text-blue-600 bg-blue-50 hover:bg-blue-100 border border-blue-100 rounded-xl text-sm font-bold transition-colors btn-press">
+                        <i class="ph-bold ph-flask"></i> Generate 100 Days Data
+                    </button>
                     <button onclick="window.app.clearAllData()" class="w-full p-3.5 text-red-600 bg-red-50 hover:bg-red-100 border border-red-100 rounded-xl text-sm font-bold transition-colors btn-press">
                         Reset App Data
                     </button>
-                    <p class="text-center text-[10px] font-bold text-slate-300 mt-4 uppercase tracking-widest">v5.3.0 • Visual Calendar</p>
+                    <p class="text-center text-[10px] font-bold text-slate-300 mt-4 uppercase tracking-widest">v5.6.0 • ICS Link Sync</p>
                 </section>
             </div>
         </div>
@@ -442,38 +461,30 @@
 
     <script>
         /**
-         * Medication Tracker Application Logic v5.3.0
-         * Changes: Fixed Settings Modal (Click-outside, Scrolling), Colored Calendar Indicators
+         * Medication Tracker Application Logic v5.6.0
+         * Feature: Notifications (Browser + Calendar Export with Deep Link)
          */
         class MedTracker {
             constructor() {
-                // Initialize today first
                 this.today = this.getLocalDateString();
-                
-                // Calculate yesterday for the opposite schedule
-                const y = new Date();
-                y.setDate(y.getDate() - 1);
+                const y = new Date(); y.setDate(y.getDate() - 1);
                 const offset = y.getTimezoneOffset() * 60000;
                 const yesterday = new Date(y.getTime() - offset).toISOString().split('T')[0];
 
                 this.state = {
-                    version: 5, 
-                    logs: {}, 
-                    bestStreak: 0,
+                    version: 5, logs: {}, bestStreak: 0,
                     medications: [
                         { id: 'med_blood', name: 'Blood Tablet', color: 'red', schedule: 'daily', scheduleDetails: {} },
                         { id: 'med_100', name: '100mg', color: 'blue', schedule: 'alternate', scheduleDetails: { startDate: this.today } },
                         { id: 'med_75', name: '75mg', color: 'teal', schedule: 'alternate', scheduleDetails: { startDate: yesterday } },
-                        { id: 'med_vitd', name: 'Vit D', color: 'amber', schedule: 'weekly', scheduleDetails: { days: [0] } } // 0 = Sunday
+                        { id: 'med_vitd', name: 'Vit D', color: 'amber', schedule: 'weekly', scheduleDetails: { days: [0] } }
                     ]
                 };
                 
                 this.currentCalendarDate = new Date();
-                this.historyPage = 0;
-                this.ITEMS_PER_PAGE = 30;
+                this.historyPage = 0; this.ITEMS_PER_PAGE = 30;
                 this.confettiCanvas = document.getElementById('confetti-canvas');
                 this.ctx = this.confettiCanvas.getContext('2d');
-                
                 this.colors = [
                     { name: 'blue', bg: 'bg-blue-500', text: 'text-blue-600', ring: 'ring-blue-500' },
                     { name: 'teal', bg: 'bg-teal-500', text: 'text-teal-600', ring: 'ring-teal-500' },
@@ -482,11 +493,10 @@
                     { name: 'purple', bg: 'bg-purple-500', text: 'text-purple-600', ring: 'ring-purple-500' },
                     { name: 'emerald', bg: 'bg-emerald-500', text: 'text-emerald-600', ring: 'ring-emerald-500' },
                     { name: 'indigo', bg: 'bg-indigo-500', text: 'text-indigo-600', ring: 'ring-indigo-500' },
-                    { name: 'rose', bg: 'bg-rose-500', text: 'text-rose-600', ring: 'ring-rose-500' },
+                    { name: 'rose', bg: 'bg-rose-500', text: 'text-rose-600', ring: 'ring-rose-500' }
                 ];
                 this.selectedColor = 'blue';
                 this.pendingAction = null; 
-
                 this.init();
             }
 
@@ -497,55 +507,100 @@
                 window.addEventListener('resize', () => this.resizeCanvas());
                 this.renderUI();
                 this.setupInputs();
-                
                 const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
                 document.getElementById('current-date-display').textContent = new Date().toLocaleDateString('en-US', options);
-                
                 document.getElementById('confirm-yes-btn').onclick = () => this.confirmAction();
+                this.checkBrowserPermission();
             }
 
-            setupInputs() {
-                document.getElementById('new-med-start-date').value = this.today;
-            }
-
-            // --- Data ---
-            loadData() {
-                const saved = localStorage.getItem('medTrackerData');
-                if (saved) {
-                    try {
-                        const parsed = JSON.parse(saved);
-                        if (!parsed.version || parsed.version < 4) {
-                            this.migrateToV4(parsed);
-                        } else {
-                            this.state = { ...this.state, ...parsed };
-                        }
-                    } catch (e) { console.error(e); }
-                }
-            }
-
-            migrateToV4(oldData) {
-                let meds = oldData.medications || [];
-                meds = meds.map(m => {
-                    if (!m.scheduleDetails) {
-                        let details = {};
-                        if (m.schedule === 'alternate') details.startDate = this.today; 
-                        return { ...m, scheduleDetails: details };
-                    }
-                    return m;
-                });
-                this.state = {
-                    version: 4,
-                    logs: oldData.logs || {},
-                    bestStreak: oldData.bestStreak || 0,
-                    medications: meds
-                };
-                this.saveData();
-            }
-
-            saveData() { localStorage.setItem('medTrackerData', JSON.stringify(this.state)); this.renderUI(); }
+            setupInputs() { document.getElementById('new-med-start-date').value = this.today; }
             getLocalDateString() { const d = new Date(); const offset = d.getTimezoneOffset() * 60000; return new Date(d.getTime() - offset).toISOString().split('T')[0]; }
 
-            // --- Logic ---
+            loadData() {
+                const saved = localStorage.getItem('medTrackerData');
+                if (saved) { try { const parsed = JSON.parse(saved); if(!parsed.version || parsed.version < 4) this.migrateToV4(parsed); else this.state = { ...this.state, ...parsed }; } catch (e) { console.error(e); } }
+            }
+            migrateToV4(oldData) {
+                let meds = oldData.medications || [];
+                meds = meds.map(m => { if (!m.scheduleDetails) { let details = {}; if (m.schedule === 'alternate') details.startDate = this.today; return { ...m, scheduleDetails: details }; } return m; });
+                this.state = { version: 4, logs: oldData.logs || {}, bestStreak: oldData.bestStreak || 0, medications: meds };
+                this.saveData();
+            }
+            saveData() { localStorage.setItem('medTrackerData', JSON.stringify(this.state)); this.renderUI(); }
+
+            // --- Notifications Logic ---
+            checkBrowserPermission() {
+                const icon = document.getElementById('browser-notif-icon');
+                if (!("Notification" in window)) { icon.className = "ph-bold ph-x-circle text-2xl text-red-300"; return; }
+                if (Notification.permission === "granted") icon.className = "ph-fill ph-toggle-right text-2xl text-green-500";
+                else if (Notification.permission === "denied") icon.className = "ph-bold ph-toggle-left text-2xl text-red-300";
+                else icon.className = "ph-bold ph-toggle-left text-2xl text-slate-300";
+            }
+
+            requestBrowserNotifications() {
+                if (!("Notification" in window)) return alert("This browser does not support notifications.");
+                Notification.requestPermission().then(permission => {
+                    this.checkBrowserPermission();
+                    if (permission === "granted") {
+                        new Notification("Notifications Enabled", { body: "You will receive alerts when the app is open.", icon: "https://unpkg.com/@phosphor-icons/core@2.0.0/assets/fill/pill-fill.svg" });
+                        this.scheduleLocalNotification();
+                    }
+                });
+            }
+
+            // Simple check on load to see if things are due
+            scheduleLocalNotification() {
+                if (Notification.permission !== "granted") return;
+                const dueMeds = this.state.medications.filter(med => {
+                    const status = this.checkStatus(med);
+                    return status.status === 'due';
+                });
+            }
+
+            // --- Calendar Export Logic (The "Offline Push" with Links) ---
+            generateCalendar() {
+                let icsContent = "BEGIN:VCALENDAR\nVERSION:2.0\nPRODID:-//MedTracker//App//EN\n";
+                const daysToExport = 30; // Next 30 days
+                const today = new Date();
+                const currentUrl = window.location.href; // Capture current URL
+
+                for (let i = 0; i < daysToExport; i++) {
+                    const d = new Date(today);
+                    d.setDate(today.getDate() + i);
+                    const offset = d.getTimezoneOffset() * 60000;
+                    const dateStr = new Date(d.getTime() - offset).toISOString().split('T')[0];
+                    const dateStrClean = dateStr.replace(/-/g, ''); // YYYYMMDD
+
+                    this.state.medications.forEach(med => {
+                        if (this.isDue(med, dateStr)) {
+                            // Event at 9:00 AM
+                            icsContent += "BEGIN:VEVENT\n";
+                            // Add UID for de-duplication
+                            icsContent += `UID:${med.id}-${dateStrClean}@medtracker.local\n`;
+                            icsContent += `DTSTART;VALUE=DATE:${dateStrClean}\n`; // All day event
+                            icsContent += `SUMMARY:Take ${med.name}\n`;
+                            icsContent += `DESCRIPTION:Tap to log dose: ${currentUrl}\n`; // Link back to app
+                            icsContent += "TRANSP:TRANSPARENT\n"; // Available
+                            icsContent += "BEGIN:VALARM\nTRIGGER:-PT15H\nACTION:DISPLAY\nDESCRIPTION:Reminder\nEND:VALARM\n"; // 9am alert
+                            icsContent += "END:VEVENT\n";
+                        }
+                    });
+                }
+                icsContent += "END:VCALENDAR";
+
+                const blob = new Blob([icsContent], { type: 'text/calendar' });
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = "med_schedule.ics";
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                window.URL.revokeObjectURL(url);
+                this.showToast("Calendar file generated!");
+            }
+
+            // --- Core Logic ---
             isDue(med, dateStr) {
                 if (med.schedule === 'daily') return true;
                 const checkDate = new Date(dateStr + 'T00:00:00');
@@ -629,7 +684,6 @@
 
             toggleLog(medId) {
                 if (!this.state.logs[this.today]) this.state.logs[this.today] = {};
-                
                 if (this.state.logs[this.today][medId]) {
                     delete this.state.logs[this.today][medId];
                     if (Object.keys(this.state.logs[this.today]).length === 0) delete this.state.logs[this.today];
@@ -643,6 +697,33 @@
                 }
             }
 
+            // --- Testing Logic ---
+            generateMockData() {
+                this.showConfirm("Overwrite current data with 100 days of test history?", () => {
+                    this.state.logs = {};
+                    const meds = this.state.medications;
+                    const today = new Date();
+                    for (let i = 0; i < 100; i++) {
+                        const d = new Date();
+                        d.setDate(today.getDate() - i);
+                        const offset = d.getTimezoneOffset() * 60000;
+                        const dateStr = new Date(d.getTime() - offset).toISOString().split('T')[0];
+                        this.state.logs[dateStr] = {};
+                        meds.forEach(med => {
+                            if (this.isDue(med, dateStr)) {
+                                if (Math.random() > 0.1) this.state.logs[dateStr][med.id] = { timestamp: Date.now(), value: true };
+                            } else {
+                                if (Math.random() > 0.95) this.state.logs[dateStr][med.id] = { timestamp: Date.now(), value: true };
+                            }
+                        });
+                        if (Object.keys(this.state.logs[dateStr]).length === 0) delete this.state.logs[dateStr];
+                    }
+                    this.saveData();
+                    this.showToast("Generated 100 days of data");
+                    this.toggleSettings();
+                });
+            }
+
             showConfirm(msg, callback) {
                 document.getElementById('confirm-msg').textContent = msg;
                 this.pendingAction = callback;
@@ -652,10 +733,7 @@
                 document.getElementById('confirm-modal').classList.add('hidden');
                 this.pendingAction = null;
             }
-            confirmAction() {
-                if (this.pendingAction) this.pendingAction();
-                this.closeConfirm();
-            }
+            confirmAction() { if (this.pendingAction) this.pendingAction(); this.closeConfirm(); }
 
             // --- UI Rendering ---
             renderUI() {
@@ -673,17 +751,11 @@
                 this.state.medications.forEach(med => {
                     const status = this.checkStatus(med);
                     const colorData = this.colors.find(c => c.name === med.color) || this.colors[0];
-                    
                     let card = document.createElement('div');
                     card.className = "rounded-2xl p-4 flex justify-between items-center transition-all duration-300 relative overflow-hidden group border";
-                    
                     let button = document.createElement('button');
-                    button.onclick = (e) => {
-                        e.stopPropagation();
-                        this.toggleLog(med.id);
-                    };
+                    button.onclick = (e) => { e.stopPropagation(); this.toggleLog(med.id); };
                     button.className = "h-10 px-5 rounded-full font-bold text-sm transition-all shadow-sm btn-press flex items-center gap-1.5 z-10 cursor-pointer";
-
                     let iconHTML = '';
 
                     if (status.status === 'taken') {
@@ -701,15 +773,9 @@
                     else {
                         card.className += " bg-white border-slate-100 opacity-60 grayscale-[0.5]";
                         button.className += " bg-slate-100 text-slate-400";
-                        if(status.status === 'skip') {
-                            button.disabled = true;
-                            button.textContent = "Rest";
-                        } else {
-                            button.textContent = "Log";
-                        }
+                        if(status.status === 'skip') { button.disabled = true; button.textContent = "Rest"; } else { button.textContent = "Log"; }
                         iconHTML = `<div class="flex items-center gap-4 z-10"><div class="w-12 h-12 rounded-xl bg-slate-100 flex items-center justify-center text-slate-400 text-2xl"><i class="ph-fill ph-pill"></i></div><div><h3 class="font-bold text-slate-600">${med.name}</h3><p class="text-xs text-slate-400">${status.text}</p></div></div>`;
                     }
-                    
                     card.insertAdjacentHTML('afterbegin', iconHTML);
                     card.appendChild(button);
                     container.appendChild(card);
@@ -751,10 +817,7 @@
                 prevBtn.disabled = this.historyPage === 0;
                 nextBtn.disabled = end >= allDates.length;
 
-                if (pageDates.length === 0) {
-                    list.innerHTML = '<div class="text-center text-slate-300 text-xs font-medium py-8">No history yet</div>';
-                    return;
-                }
+                if (pageDates.length === 0) { list.innerHTML = '<div class="text-center text-slate-300 text-xs font-medium py-8">No history yet</div>'; return; }
 
                 pageDates.forEach(date => {
                     const dayLogs = this.state.logs[date];
@@ -764,10 +827,7 @@
                     let pillsHtml = '';
                     Object.keys(dayLogs).forEach(medId => {
                         const med = this.state.medications.find(m => m.id === medId);
-                        if (med) {
-                             const colorData = this.colors.find(c => c.name === med.color);
-                             pillsHtml += `<div class="w-2 h-2 rounded-full ${colorData.bg}"></div>`;
-                        }
+                        if (med) { const colorData = this.colors.find(c => c.name === med.color); pillsHtml += `<div class="w-2 h-2 rounded-full ${colorData.bg}"></div>`; }
                     });
                     list.innerHTML += `<div class="flex items-center justify-between py-3 px-4 border-b border-slate-50 last:border-0 hover:bg-slate-50 transition-colors cursor-pointer group" onclick="window.app.openDayDetails('${date}')"><div class="flex items-center gap-3"><div class="flex flex-col items-center justify-center w-10 h-10 rounded-lg bg-slate-50 text-slate-500 font-bold group-hover:bg-indigo-50 group-hover:text-indigo-600 transition-colors"><span class="text-[9px] uppercase leading-none">${weekday}</span><span class="text-lg leading-none mt-0.5">${d.getDate()}</span></div><div class="flex gap-1.5">${pillsHtml}</div></div><i class="ph-bold ph-caret-right text-slate-300 group-hover:text-indigo-400"></i></div>`;
                 });
@@ -777,53 +837,29 @@
                 const year = this.currentCalendarDate.getFullYear();
                 const month = this.currentCalendarDate.getMonth();
                 document.getElementById('calendar-month-title').textContent = this.currentCalendarDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
-                
                 const firstDay = new Date(year, month, 1);
                 const lastDay = new Date(year, month + 1, 0);
                 const daysInMonth = lastDay.getDate();
                 const startDayIndex = firstDay.getDay();
-                
                 const grid = document.getElementById('calendar-days');
                 grid.innerHTML = '';
-                
-                // Empty slots for days before start of month
                 for (let i = 0; i < startDayIndex; i++) grid.innerHTML += `<div></div>`;
-                
-                // Days
-                const todayDate = new Date();
-                todayDate.setHours(0,0,0,0); // normalize today
-
+                const todayDate = new Date(); todayDate.setHours(0,0,0,0);
                 for (let day = 1; day <= daysInMonth; day++) {
                     const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
                     const currentLoopDate = new Date(year, month, day);
                     const completion = this.getDayCompletionStatus(dateStr);
-                    
-                    let colorClass = "bg-slate-50 text-slate-600 hover:bg-slate-100"; // Default Gray
+                    let colorClass = "bg-slate-50 text-slate-600 hover:bg-slate-100";
                     let isTodayClass = "";
-
-                    // Calculate Status Color
                     if (currentLoopDate <= todayDate) {
                         if (completion.required > 0) {
-                            if (completion.complete) {
-                                colorClass = "bg-emerald-100 text-emerald-700 ring-1 ring-emerald-200 shadow-sm"; // Green
-                            } else if (completion.taken > 0) {
-                                colorClass = "bg-amber-100 text-amber-700 ring-1 ring-amber-200 shadow-sm"; // Yellow
-                            } else {
-                                colorClass = "bg-red-50 text-red-600 ring-1 ring-red-100"; // Red
-                            }
+                            if (completion.complete) colorClass = "bg-emerald-100 text-emerald-700 ring-1 ring-emerald-200 shadow-sm";
+                            else if (completion.taken > 0) colorClass = "bg-amber-100 text-amber-700 ring-1 ring-amber-200 shadow-sm";
+                            else colorClass = "bg-red-50 text-red-600 ring-1 ring-red-100";
                         }
                     }
-
-                    // Highlight Today
-                    if (dateStr === this.today) {
-                        isTodayClass = "ring-2 ring-offset-2 ring-indigo-500 z-10 font-black";
-                    }
-
-                    grid.innerHTML += `
-                        <div class="calendar-day ${colorClass} ${isTodayClass}" onclick="window.app.openDayDetails('${dateStr}')">
-                            <span>${day}</span>
-                        </div>
-                    `;
+                    if (dateStr === this.today) isTodayClass = "ring-2 ring-offset-2 ring-indigo-500 z-10 font-black";
+                    grid.innerHTML += `<div class="calendar-day ${colorClass} ${isTodayClass}" onclick="window.app.openDayDetails('${dateStr}')"><span>${day}</span></div>`;
                 }
             }
             
@@ -907,10 +943,8 @@
                 const cal = document.getElementById('view-calendar');
                 const navDash = document.getElementById('nav-dashboard');
                 const navCal = document.getElementById('nav-calendar');
-                
                 const activeClass = "bg-indigo-600 text-white shadow-md";
                 const inactiveClass = "text-slate-500 hover:bg-slate-50";
-
                 if (viewName === 'dashboard') {
                     dash.classList.remove('hidden'); cal.classList.add('hidden');
                     navDash.className = "flex items-center gap-2 px-5 py-3 rounded-full " + activeClass + " transition-all duration-300";
@@ -935,9 +969,7 @@
                 const animate = () => {
                     this.ctx.clearRect(0,0,window.innerWidth,window.innerHeight);
                     let active = false;
-                    particles.forEach(p => {
-                        if(p.life>0){ active=true; p.x+=p.vx; p.y+=p.vy; p.vy+=p.gravity; p.life--; p.size*=0.96; this.ctx.fillStyle=p.color; this.ctx.beginPath(); this.ctx.arc(p.x,p.y,p.size,0,Math.PI*2); this.ctx.fill(); }
-                    });
+                    particles.forEach(p => { if(p.life>0){ active=true; p.x+=p.vx; p.y+=p.vy; p.vy+=p.gravity; p.life--; p.size*=0.96; this.ctx.fillStyle=p.color; this.ctx.beginPath(); this.ctx.arc(p.x,p.y,p.size,0,Math.PI*2); this.ctx.fill(); } });
                     if(active) requestAnimationFrame(animate);
                 };
                 animate();
@@ -959,12 +991,9 @@
             openAddMedModal() {
                 document.getElementById('new-med-name').value = '';
                 document.getElementById('new-med-schedule-type').value = 'daily';
-                
-                // Clear inputs to prevent bugs
                 document.getElementById('new-med-start-date').value = this.today;
                 document.getElementById('new-med-month-day').value = '';
                 document.querySelectorAll('.day-checkbox').forEach(cb => cb.checked = false);
-
                 this.toggleScheduleInputs();
                 this.selectedColor = 'blue';
                 this.renderColorPicker();
@@ -986,7 +1015,6 @@
                     if(!dayVal || dayVal < 1 || dayVal > 31) return alert("Please enter a valid day (1-31)");
                     details.dayOfMonth = parseInt(dayVal);
                 }
-
                 this.state.medications.push({ id: 'med_'+Date.now(), name, color: this.selectedColor, schedule: type, scheduleDetails: details });
                 this.saveData();
                 document.getElementById('add-med-modal').classList.add('hidden');
@@ -998,7 +1026,6 @@
                     this.saveData();
                 });
             }
-            
             exportJSON() { const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(this.state)); const node = document.createElement('a'); node.setAttribute("href", dataStr); node.setAttribute("download", "med_tracker_backup.json"); document.body.appendChild(node); node.click(); node.remove(); }
             exportCSV() {
                 let csv = "Date,Medication,Status\n";
@@ -1028,8 +1055,6 @@
                 });
             }
         }
-
-        // Global Assignment to ensure onclick handlers work
         window.app = new MedTracker();
     </script>
 </body>
