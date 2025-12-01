@@ -341,7 +341,7 @@
                     <button onclick="window.app.clearAllData()" class="w-full p-3.5 text-red-600 bg-red-50 hover:bg-red-100 border border-red-100 rounded-xl text-sm font-bold transition-colors btn-press">
                         Reset App Data
                     </button>
-                    <p class="text-center text-[10px] font-bold text-slate-300 mt-4 uppercase tracking-widest">v5.7.0 • Recurring Sync</p>
+                    <p class="text-center text-[10px] font-bold text-slate-300 mt-4 uppercase tracking-widest">v5.8.1 • Smart Archive</p>
                 </section>
             </div>
         </div>
@@ -461,8 +461,8 @@
 
     <script>
         /**
-         * Medication Tracker Application Logic v5.7.0
-         * Feature: Smart Recurring Calendar Export
+         * Medication Tracker Application Logic v5.8.1
+         * Feature: Soft Deletes (Archiving) + Empty State UI + Fixes
          */
         class MedTracker {
             constructor() {
@@ -528,114 +528,9 @@
             }
             saveData() { localStorage.setItem('medTrackerData', JSON.stringify(this.state)); this.renderUI(); }
 
-            // --- Notifications Logic ---
-            checkBrowserPermission() {
-                const icon = document.getElementById('browser-notif-icon');
-                if (!("Notification" in window)) { icon.className = "ph-bold ph-x-circle text-2xl text-red-300"; return; }
-                if (Notification.permission === "granted") icon.className = "ph-fill ph-toggle-right text-2xl text-green-500";
-                else if (Notification.permission === "denied") icon.className = "ph-bold ph-toggle-left text-2xl text-red-300";
-                else icon.className = "ph-bold ph-toggle-left text-2xl text-slate-300";
-            }
-
-            requestBrowserNotifications() {
-                if (!("Notification" in window)) return alert("This browser does not support notifications.");
-                Notification.requestPermission().then(permission => {
-                    this.checkBrowserPermission();
-                    if (permission === "granted") {
-                        new Notification("Notifications Enabled", { body: "You will receive alerts when the app is open.", icon: "https://unpkg.com/@phosphor-icons/core@2.0.0/assets/fill/pill-fill.svg" });
-                        this.scheduleLocalNotification();
-                    }
-                });
-            }
-
-            scheduleLocalNotification() {
-                if (Notification.permission !== "granted") return;
-                const dueMeds = this.state.medications.filter(med => {
-                    const status = this.checkStatus(med);
-                    return status.status === 'due';
-                });
-            }
-
-            // --- RECURRING CALENDAR EXPORT (SMART SERIES) ---
-            generateCalendar() {
-                let icsContent = "BEGIN:VCALENDAR\nVERSION:2.0\nPRODID:-//MedTracker//App//EN\n";
-                const currentUrl = window.location.href;
-
-                this.state.medications.forEach(med => {
-                    // Logic to find the correct DTSTART and RRULE
-                    let start = new Date(); // Default start today
-                    start.setHours(9, 0, 0, 0); // 9 AM
-                    let rrule = "";
-                    let isValid = true;
-
-                    if (med.schedule === 'daily') {
-                        rrule = "FREQ=DAILY";
-                    } 
-                    else if (med.schedule === 'weekly') {
-                        // Map internal 0-6 (Sun-Sat) to iCal SU,MO,TU...
-                        const daysMap = ['SU', 'MO', 'TU', 'WE', 'TH', 'FR', 'SA'];
-                        const selectedDays = med.scheduleDetails.days.map(d => daysMap[d]).join(',');
-                        rrule = `FREQ=WEEKLY;BYDAY=${selectedDays}`;
-                    }
-                    else if (med.schedule === 'monthly') {
-                        const dayOfMonth = med.scheduleDetails.dayOfMonth;
-                        // Move start date to the correct day of this month
-                        start.setDate(dayOfMonth);
-                        // If that day passed, start next month
-                        if (start < new Date()) start.setMonth(start.getMonth() + 1);
-                        rrule = `FREQ=MONTHLY;BYMONTHDAY=${dayOfMonth}`;
-                    }
-                    else if (med.schedule === 'alternate') {
-                        const genesisStr = med.scheduleDetails.startDate;
-                        if (!genesisStr) { isValid = false; } else {
-                            const genesis = new Date(genesisStr + 'T00:00:00');
-                            const todayStr = this.getLocalDateString();
-                            const checkDate = new Date(todayStr + 'T00:00:00');
-                            
-                            // Check diff to see if due today or tomorrow
-                            const diffTime = checkDate - genesis;
-                            const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-                            
-                            if (diffDays % 2 !== 0) {
-                                // Not due today, due tomorrow
-                                start.setDate(start.getDate() + 1);
-                            }
-                            rrule = "FREQ=DAILY;INTERVAL=2";
-                        }
-                    }
-
-                    if (isValid) {
-                        // Format: YYYYMMDDTHHMMSS
-                        const pad = (n) => n < 10 ? '0' + n : n;
-                        const dateString = `${start.getFullYear()}${pad(start.getMonth() + 1)}${pad(start.getDate())}T090000`;
-
-                        icsContent += "BEGIN:VEVENT\n";
-                        icsContent += `UID:${med.id}@medtracker.local\n`; // Consistent UID for updates
-                        icsContent += `DTSTART:${dateString}\n`;
-                        if(rrule) icsContent += `RRULE:${rrule}\n`;
-                        icsContent += `SUMMARY:Take ${med.name}\n`;
-                        icsContent += `DESCRIPTION:Log dose here: ${currentUrl}\n`;
-                        icsContent += "BEGIN:VALARM\nTRIGGER:-PT0M\nACTION:DISPLAY\nDESCRIPTION:Reminder\nEND:VALARM\n";
-                        icsContent += "END:VEVENT\n";
-                    }
-                });
-
-                icsContent += "END:VCALENDAR";
-
-                const blob = new Blob([icsContent], { type: 'text/calendar' });
-                const url = window.URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = "med_schedule.ics";
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-                window.URL.revokeObjectURL(url);
-                this.showToast("Calendar file generated!");
-            }
-
-            // --- Core Logic ---
+            // --- Logic ---
             isDue(med, dateStr) {
+                if (med.deleted) return false; // Archived meds never due
                 if (med.schedule === 'daily') return true;
                 const checkDate = new Date(dateStr + 'T00:00:00');
                 if (med.schedule === 'weekly') {
@@ -707,7 +602,7 @@
                 const takenIds = Object.keys(logs);
                 let required = 0;
                 let taken = 0;
-                this.state.medications.forEach(med => {
+                this.state.medications.filter(m => !m.deleted).forEach(med => {
                     if (this.isDue(med, dateStr)) {
                         required++;
                         if (takenIds.includes(med.id)) taken++;
@@ -735,7 +630,7 @@
             generateMockData() {
                 this.showConfirm("Overwrite current data with 100 days of test history?", () => {
                     this.state.logs = {};
-                    const meds = this.state.medications;
+                    const meds = this.state.medications.filter(m => !m.deleted);
                     const today = new Date();
                     for (let i = 0; i < 100; i++) {
                         const d = new Date();
@@ -782,7 +677,26 @@
             renderDashboard() {
                 const container = document.getElementById('medication-cards-container');
                 container.innerHTML = '';
-                this.state.medications.forEach(med => {
+                const activeMeds = this.state.medications.filter(m => !m.deleted);
+
+                // EMPTY STATE
+                if (activeMeds.length === 0) {
+                    container.innerHTML = `
+                        <div class="text-center py-10 bg-white/50 rounded-3xl border border-dashed border-slate-300">
+                            <div class="w-16 h-16 bg-white rounded-full flex items-center justify-center mx-auto shadow-sm mb-4">
+                                <i class="ph-fill ph-pill-plus text-3xl text-indigo-400"></i>
+                            </div>
+                            <h3 class="font-bold text-slate-700 text-lg mb-1">No medications yet</h3>
+                            <p class="text-xs text-slate-400 mb-5 max-w-[200px] mx-auto">Add your first pill to start tracking your daily streak.</p>
+                            <button onclick="window.app.openAddMedModal()" class="px-6 py-3 bg-indigo-600 text-white rounded-full font-bold shadow-lg shadow-indigo-200 hover:bg-indigo-700 transition-all btn-press flex items-center gap-2 mx-auto animate-bounce">
+                                <i class="ph-bold ph-plus"></i> Add Medication
+                            </button>
+                        </div>
+                    `;
+                    return;
+                }
+
+                activeMeds.forEach(med => {
                     const status = this.checkStatus(med);
                     const colorData = this.colors.find(c => c.name === med.color) || this.colors[0];
                     let card = document.createElement('div');
@@ -861,6 +775,7 @@
                     let pillsHtml = '';
                     Object.keys(dayLogs).forEach(medId => {
                         const med = this.state.medications.find(m => m.id === medId);
+                        // Med might be deleted/archived, but we still show it in history!
                         if (med) { const colorData = this.colors.find(c => c.name === med.color); pillsHtml += `<div class="w-2 h-2 rounded-full ${colorData.bg}"></div>`; }
                     });
                     list.innerHTML += `<div class="flex items-center justify-between py-3 px-4 border-b border-slate-50 last:border-0 hover:bg-slate-50 transition-colors cursor-pointer group" onclick="window.app.openDayDetails('${date}')"><div class="flex items-center gap-3"><div class="flex flex-col items-center justify-center w-10 h-10 rounded-lg bg-slate-50 text-slate-500 font-bold group-hover:bg-indigo-50 group-hover:text-indigo-600 transition-colors"><span class="text-[9px] uppercase leading-none">${weekday}</span><span class="text-lg leading-none mt-0.5">${d.getDate()}</span></div><div class="flex gap-1.5">${pillsHtml}</div></div><i class="ph-bold ph-caret-right text-slate-300 group-hover:text-indigo-400"></i></div>`;
@@ -902,7 +817,7 @@
                 const badge = document.getElementById('notif-badge');
                 panel.innerHTML = '';
                 let dueCount = 0;
-                this.state.medications.forEach(med => {
+                this.state.medications.filter(m => !m.deleted).forEach(med => {
                     const status = this.checkStatus(med);
                     if (status.status === 'due' || (status.status === 'neutral' && med.schedule === 'daily')) {
                          if (!(this.state.logs[this.today] && this.state.logs[this.today][med.id])) {
@@ -930,7 +845,7 @@
                     if (med) takenList.innerHTML += `<div class="p-3 rounded-xl bg-emerald-50 border border-emerald-100 flex items-center gap-3"><i class="ph-fill ph-check-circle text-emerald-500 text-lg"></i><span class="text-sm font-bold text-slate-700">${med.name}</span></div>`;
                 });
                 let missedCount = 0;
-                this.state.medications.forEach(med => {
+                this.state.medications.filter(m => !m.deleted).forEach(med => {
                      if (this.isDue(med, dateStr) && !takenIds.includes(med.id)) {
                          missedList.innerHTML += `<div class="p-3 rounded-xl bg-red-50 border border-red-100 flex items-center gap-3"><i class="ph-fill ph-warning-circle text-red-500 text-lg"></i><span class="text-sm font-bold text-slate-700">${med.name}</span></div>`;
                          missedCount++;
@@ -943,7 +858,7 @@
             renderSettingsList() {
                 const list = document.getElementById('settings-med-list');
                 list.innerHTML = '';
-                this.state.medications.forEach(med => {
+                this.state.medications.filter(m => !m.deleted).forEach(med => {
                     const colorData = this.colors.find(c => c.name === med.color);
                     let scheduleText = med.schedule;
                     if (med.schedule === 'weekly') scheduleText = "Weekly"; if (med.schedule === 'monthly') scheduleText = "Monthly"; if (med.schedule === 'alternate') scheduleText = "Every Other Day";
@@ -1055,9 +970,13 @@
                 this.showToast("Added!");
             }
             deleteMedication(id) { 
-                this.showConfirm("Delete this medication? History will remain.", () => {
-                    this.state.medications = this.state.medications.filter(m => m.id !== id);
-                    this.saveData();
+                this.showConfirm("Archive this medication? History will be kept.", () => {
+                    // Soft Delete: Mark as deleted instead of filtering out
+                    const medIndex = this.state.medications.findIndex(m => m.id === id);
+                    if (medIndex !== -1) {
+                        this.state.medications[medIndex].deleted = true;
+                        this.saveData();
+                    }
                 });
             }
             exportJSON() { const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(this.state)); const node = document.createElement('a'); node.setAttribute("href", dataStr); node.setAttribute("download", "med_tracker_backup.json"); document.body.appendChild(node); node.click(); node.remove(); }
@@ -1087,6 +1006,40 @@
                     localStorage.removeItem('medTrackerData'); 
                     location.reload(); 
                 });
+            }
+            // Calendar Export Logic
+            generateCalendar() {
+                let icsContent = "BEGIN:VCALENDAR\nVERSION:2.0\nPRODID:-//MedTracker//App//EN\n";
+                const currentUrl = window.location.href;
+                // Only export active meds
+                this.state.medications.filter(m => !m.deleted).forEach(med => {
+                    let start = new Date(); start.setHours(9, 0, 0, 0); let rrule = ""; let isValid = true;
+                    if (med.schedule === 'daily') rrule = "FREQ=DAILY";
+                    else if (med.schedule === 'weekly') { const daysMap = ['SU', 'MO', 'TU', 'WE', 'TH', 'FR', 'SA']; const selectedDays = med.scheduleDetails.days.map(d => daysMap[d]).join(','); rrule = `FREQ=WEEKLY;BYDAY=${selectedDays}`; }
+                    else if (med.schedule === 'monthly') { const dayOfMonth = med.scheduleDetails.dayOfMonth; start.setDate(dayOfMonth); if (start < new Date()) start.setMonth(start.getMonth() + 1); rrule = `FREQ=MONTHLY;BYMONTHDAY=${dayOfMonth}`; }
+                    else if (med.schedule === 'alternate') { const genesisStr = med.scheduleDetails.startDate; if (!genesisStr) { isValid = false; } else { const genesis = new Date(genesisStr + 'T00:00:00'); const todayStr = this.getLocalDateString(); const checkDate = new Date(todayStr + 'T00:00:00'); const diffTime = checkDate - genesis; const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24)); if (diffDays % 2 !== 0) start.setDate(start.getDate() + 1); rrule = "FREQ=DAILY;INTERVAL=2"; } }
+                    if (isValid) { const pad = (n) => n < 10 ? '0' + n : n; const dateString = `${start.getFullYear()}${pad(start.getMonth() + 1)}${pad(start.getDate())}T090000`; icsContent += "BEGIN:VEVENT\n"; icsContent += `UID:${med.id}@medtracker.local\n`; icsContent += `DTSTART:${dateString}\n`; if(rrule) icsContent += `RRULE:${rrule}\n`; icsContent += `SUMMARY:Take ${med.name}\n`; icsContent += `DESCRIPTION:Log dose here: ${currentUrl}\n`; icsContent += "BEGIN:VALARM\nTRIGGER:-PT0M\nACTION:DISPLAY\nDESCRIPTION:Reminder\nEND:VALARM\n"; icsContent += "END:VEVENT\n"; }
+                });
+                icsContent += "END:VCALENDAR";
+                const blob = new Blob([icsContent], { type: 'text/calendar' });
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a'); a.href = url; a.download = "med_schedule.ics"; document.body.appendChild(a); a.click(); document.body.removeChild(a); window.URL.revokeObjectURL(url); this.showToast("Calendar file generated!");
+            }
+            checkBrowserPermission() { const icon = document.getElementById('browser-notif-icon'); if (!("Notification" in window)) { icon.className = "ph-bold ph-x-circle text-2xl text-red-300"; return; } if (Notification.permission === "granted") icon.className = "ph-fill ph-toggle-right text-2xl text-green-500"; else if (Notification.permission === "denied") icon.className = "ph-bold ph-toggle-left text-2xl text-red-300"; else icon.className = "ph-bold ph-toggle-left text-2xl text-slate-300"; }
+            requestBrowserNotifications() { if (!("Notification" in window)) return alert("This browser does not support notifications."); Notification.requestPermission().then(permission => { this.checkBrowserPermission(); if (permission === "granted") { new Notification("Notifications Enabled", { body: "You will receive alerts when the app is open.", icon: "https://unpkg.com/@phosphor-icons/core@2.0.0/assets/fill/pill-fill.svg" }); this.scheduleLocalNotification(); } }); }
+            scheduleLocalNotification() { if (Notification.permission !== "granted") return; }
+            showConfirm(msg, callback) {
+                document.getElementById('confirm-msg').textContent = msg;
+                this.pendingAction = callback;
+                document.getElementById('confirm-modal').classList.remove('hidden');
+            }
+            closeConfirm() {
+                document.getElementById('confirm-modal').classList.add('hidden');
+                this.pendingAction = null;
+            }
+            confirmAction() {
+                if (this.pendingAction) this.pendingAction();
+                this.closeConfirm();
             }
         }
         window.app = new MedTracker();
