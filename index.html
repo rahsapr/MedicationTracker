@@ -5,6 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>MedTracker</title>
     
+    <!-- Custom Favicon (Purple Pill) -->
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='none'/%3E%3Cpath d='M85.2,14.8a28.4,28.4,0,0,0-40.2,0L14.8,45a28.4,28.4,0,0,0,40.2,40.2l30.2-30.2A28.4,28.4,0,0,0,85.2,14.8Z' fill='%234f46e5'/%3E%3Cline x1='35' y1='65' x2='65' y2='35' stroke='white' stroke-width='8' stroke-linecap='round'/%3E%3C/svg%3E" type="image/svg+xml">
+    
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     
@@ -114,6 +117,10 @@
                 <i class="ph-bold ph-bell text-xl"></i>
                 <span id="notif-badge" class="absolute top-1 right-1 w-2.5 h-2.5 bg-red-500 border-2 border-white rounded-full hidden"></span>
             </button>
+            <!-- Help Icon -->
+            <button onclick="window.app.switchView('help')" class="p-2.5 rounded-full bg-white/50 hover:bg-white border border-white/60 shadow-sm text-slate-600 transition-all btn-press">
+                <i class="ph-bold ph-question text-xl"></i>
+            </button>
             <!-- Settings -->
             <button onclick="window.app.toggleSettings()" class="p-2.5 rounded-full bg-white/50 hover:bg-white border border-white/60 shadow-sm text-slate-600 transition-all btn-press">
                 <i class="ph-bold ph-gear text-xl"></i>
@@ -133,9 +140,42 @@
     <!-- Main Content Area -->
     <main class="flex-1 overflow-hidden relative z-0">
         
+        <!-- HELP VIEW (ONBOARDING) -->
+        <div id="view-help" class="h-full overflow-y-auto no-scrollbar p-5 pb-32 hidden max-w-md mx-auto transition-opacity duration-200">
+            <div class="glass-card rounded-3xl p-8 shadow-lg text-center mb-6">
+                <div class="w-24 h-24 bg-indigo-100 rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner animate-pulse">
+                    <i class="ph-fill ph-hand-waving text-5xl text-indigo-600"></i>
+                </div>
+                <h2 class="text-3xl font-black text-slate-800 mb-4 tracking-tight">Welcome!</h2>
+                <p class="text-slate-500 mb-8 leading-relaxed">MedTracker is your private, offline-first companion for better health.</p>
+                
+                <div class="space-y-6 text-left mb-10">
+                    <div class="flex items-start gap-4">
+                        <div class="w-10 h-10 rounded-2xl bg-indigo-50 flex items-center justify-center text-indigo-600 shrink-0 shadow-sm"><i class="ph-bold ph-check-circle text-xl"></i></div>
+                        <div><h4 class="font-bold text-slate-700">Track Medications</h4><p class="text-sm text-slate-400">Log daily doses, see patterns, and build streaks.</p></div>
+                    </div>
+                    <div class="flex items-start gap-4">
+                        <div class="w-10 h-10 rounded-2xl bg-purple-50 flex items-center justify-center text-purple-600 shrink-0 shadow-sm"><i class="ph-bold ph-notebook text-xl"></i></div>
+                        <div><h4 class="font-bold text-slate-700">Journal & Weight</h4><p class="text-sm text-slate-400">Monitor your weight trends and keep a daily health diary.</p></div>
+                    </div>
+                    <div class="flex items-start gap-4">
+                        <div class="w-10 h-10 rounded-2xl bg-green-50 flex items-center justify-center text-green-600 shrink-0 shadow-sm"><i class="ph-bold ph-shield-check text-xl"></i></div>
+                        <div><h4 class="font-bold text-slate-700">100% Private</h4><p class="text-sm text-slate-400">Data stays on this device. No servers, no accounts.</p></div>
+                    </div>
+                </div>
+
+                <button onclick="window.app.finishOnboarding()" class="w-full py-4 bg-indigo-600 text-white rounded-2xl font-bold shadow-xl shadow-indigo-200 hover:bg-indigo-700 transition-all btn-press flex items-center justify-center gap-2 text-lg">
+                    Let's Go! <i class="ph-bold ph-arrow-right"></i>
+                </button>
+            </div>
+        </div>
+
         <!-- DASHBOARD VIEW -->
         <div id="view-dashboard" class="h-full overflow-y-auto no-scrollbar p-5 pb-32 space-y-6 max-w-md mx-auto transition-opacity duration-200">
             
+            <!-- Missed Dose Alert Area -->
+            <div id="missed-dose-alert-container"></div>
+
             <!-- Gamification Streak Card -->
             <div class="bg-gradient-to-br from-indigo-600 via-purple-600 to-indigo-800 rounded-3xl p-5 shadow-lg shadow-indigo-500/30 text-white relative overflow-hidden ring-1 ring-white/20">
                 <div class="absolute -top-10 -right-10 w-40 h-40 bg-white/10 rounded-full blur-2xl"></div>
@@ -156,9 +196,8 @@
                 </div>
             </div>
 
-            <!-- Medication Cards -->
+            <!-- Medication Cards Container -->
             <div class="space-y-2">
-                <h2 class="text-sm font-bold text-slate-400 uppercase tracking-wider pl-1">Today's Plan</h2>
                 <div id="medication-cards-container" class="space-y-4"></div>
             </div>
 
@@ -180,6 +219,7 @@
 
         <!-- JOURNAL / HEALTH VIEW -->
         <div id="view-journal" class="h-full overflow-y-auto no-scrollbar p-5 pb-32 hidden max-w-md mx-auto transition-opacity duration-200">
+            <!-- (Same as before) -->
             <div class="glass-card rounded-3xl p-5 mb-6 shadow-sm">
                 <div class="flex justify-between items-start mb-4">
                     <div>
@@ -189,7 +229,6 @@
                     <div id="bmi-badge" class="hidden px-2.5 py-1 rounded-lg text-xs font-bold bg-slate-100 text-slate-500">BMI: --</div>
                 </div>
 
-                <!-- Chart Controls -->
                 <div class="flex justify-end gap-1 mb-2">
                     <button onclick="window.app.setChartRange('1m')" class="chart-range-btn text-[10px] font-bold px-2 py-1 rounded bg-slate-100 text-slate-500 hover:bg-indigo-100 hover:text-indigo-600 transition-colors" data-range="1m">1M</button>
                     <button onclick="window.app.setChartRange('3m')" class="chart-range-btn text-[10px] font-bold px-2 py-1 rounded bg-slate-100 text-slate-500 hover:bg-indigo-100 hover:text-indigo-600 transition-colors" data-range="3m">3M</button>
@@ -198,13 +237,11 @@
                     <button onclick="window.app.setChartRange('all')" class="chart-range-btn text-[10px] font-bold px-2 py-1 rounded bg-indigo-100 text-indigo-600 transition-colors" data-range="all">All</button>
                 </div>
 
-                <!-- Chart -->
                 <div class="relative w-full h-48 bg-slate-50 rounded-xl mb-4 overflow-hidden border border-slate-100">
                     <canvas id="weight-chart" class="w-full h-full"></canvas>
                     <div id="chart-tooltip" class="absolute top-0 left-0 bg-slate-800 text-white text-[10px] px-2 py-1 rounded opacity-0 pointer-events-none transition-opacity z-10 whitespace-nowrap"></div>
                 </div>
 
-                <!-- Inputs -->
                 <div class="flex gap-2 mb-2">
                      <input type="date" id="journal-date" class="w-1/3 p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-600 focus:outline-none" onchange="window.app.renderJournal()">
                      <input type="number" id="weight-input" step="0.1" placeholder="0.0" class="flex-1 p-3 bg-slate-50 border border-slate-200 rounded-xl text-lg font-bold text-slate-700 focus:outline-none focus:border-indigo-500">
@@ -226,6 +263,7 @@
 
         <!-- CALENDAR VIEW -->
         <div id="view-calendar" class="h-full overflow-y-auto no-scrollbar p-5 pb-32 hidden max-w-md mx-auto transition-opacity duration-200">
+            <!-- (Same as before) -->
             <div class="glass-card rounded-3xl shadow-sm p-5 mb-6">
                 <div class="flex justify-between items-center mb-6">
                     <button onclick="window.app.changeMonth(-1)" class="p-2 hover:bg-slate-100 rounded-full text-slate-600 transition-colors"><i class="ph-bold ph-caret-left text-lg"></i></button>
@@ -255,6 +293,7 @@
     <!-- Floating Navigation -->
     <div class="fixed bottom-6 left-0 right-0 z-30 flex justify-center pointer-events-none">
         <nav class="glass-card shadow-2xl shadow-indigo-500/10 rounded-full px-2 py-1.5 flex gap-1 pointer-events-auto scale-100 transform transition-transform">
+            <button onclick="window.app.switchView('help')" id="nav-help" class="flex items-center gap-2 px-5 py-3 rounded-full text-slate-500 hover:bg-slate-50 transition-all duration-300"><i class="ph-bold ph-question text-xl"></i></button>
             <button onclick="window.app.switchView('dashboard')" id="nav-dashboard" class="flex items-center gap-2 px-5 py-3 rounded-full bg-indigo-600 text-white shadow-md transition-all duration-300"><i class="ph-fill ph-house text-xl"></i></button>
             <button onclick="window.app.switchView('journal')" id="nav-journal" class="flex items-center gap-2 px-5 py-3 rounded-full text-slate-500 hover:bg-slate-50 transition-all duration-300"><i class="ph-bold ph-notebook text-xl"></i></button>
             <button onclick="window.app.switchView('calendar')" id="nav-calendar" class="flex items-center gap-2 px-5 py-3 rounded-full text-slate-500 hover:bg-slate-50 transition-all duration-300"><i class="ph-bold ph-calendar-blank text-xl"></i></button>
@@ -302,7 +341,7 @@
                 <!-- Data -->
                 <section class="border-t border-slate-100 pt-6"><h3 class="font-bold text-lg text-slate-800 mb-3">Data</h3><div class="grid grid-cols-1 gap-3"><div class="grid grid-cols-2 gap-3"><button onclick="window.app.exportCSV()" class="flex items-center justify-center gap-2 p-3.5 bg-green-50 text-green-700 hover:bg-green-100 border border-green-100 rounded-xl text-sm font-bold btn-press transition-colors"><i class="ph-bold ph-file-csv"></i> Export CSV</button><button onclick="window.app.exportJSON()" class="flex items-center justify-center gap-2 p-3.5 bg-slate-50 hover:bg-slate-100 border border-slate-100 rounded-xl text-sm font-bold text-slate-600 btn-press transition-colors"><i class="ph-bold ph-download-simple"></i> Backup</button></div><label class="flex items-center justify-center gap-2 p-3.5 bg-slate-50 rounded-xl text-sm font-bold text-slate-600 btn-press cursor-pointer hover:bg-slate-100 border border-slate-100 transition-colors"><i class="ph-bold ph-upload-simple"></i> Restore Backup<input type="file" id="import-file" class="hidden" accept=".json" onchange="window.app.importData(this)"></label></div></section>
                 <!-- Danger -->
-                <section class="pt-6 border-t border-slate-100"><button onclick="window.app.generateMockData()" class="w-full mb-3 p-3.5 text-blue-600 bg-blue-50 hover:bg-blue-100 border border-blue-100 rounded-xl text-sm font-bold transition-colors btn-press"><i class="ph-bold ph-flask"></i> Generate 100 Days Data</button><button onclick="window.app.clearAllData()" class="w-full p-3.5 text-red-600 bg-red-50 hover:bg-red-100 border border-red-100 rounded-xl text-sm font-bold transition-colors btn-press">Reset App Data</button><p class="text-center text-[10px] font-bold text-slate-300 mt-4 uppercase tracking-widest">v6.3.6 • Full Restore</p></section>
+                <section class="pt-6 border-t border-slate-100"><button onclick="window.app.generateMockData()" class="w-full mb-3 p-3.5 text-blue-600 bg-blue-50 hover:bg-blue-100 border border-blue-100 rounded-xl text-sm font-bold transition-colors btn-press"><i class="ph-bold ph-flask"></i> Generate 100 Days Data</button><button onclick="window.app.clearAllData()" class="w-full p-3.5 text-red-600 bg-red-50 hover:bg-red-100 border border-red-100 rounded-xl text-sm font-bold transition-colors btn-press">Reset App Data</button><p class="text-center text-[10px] font-bold text-slate-300 mt-4 uppercase tracking-widest">v7.4.0 • Help Tab</p></section>
             </div>
         </div>
     </div>
@@ -311,55 +350,23 @@
         <div class="bg-white w-full max-w-sm rounded-3xl p-6 shadow-2xl animate-slide-up max-h-[90vh] overflow-y-auto ring-1 ring-white/20">
             <h3 class="font-extrabold text-xl text-slate-800 mb-6">Add Medication</h3>
             <div class="space-y-5">
-                <div>
-                    <label class="text-xs font-bold text-slate-400 uppercase tracking-wide ml-1">Name</label>
-                    <input type="text" id="new-med-name" placeholder="e.g. Vitamin D" class="w-full p-3 border border-slate-200 rounded-xl mt-1.5 focus:outline-none focus:border-indigo-500 font-medium text-slate-700">
-                </div>
-                <div>
-                    <label class="text-xs font-bold text-slate-400 uppercase tracking-wide ml-1">Color Tag</label>
-                    <div class="flex gap-3 mt-1.5 overflow-x-auto pb-2 no-scrollbar" id="color-picker"></div>
-                </div>
-                <div>
-                    <label class="text-xs font-bold text-slate-400 uppercase tracking-wide ml-1">Frequency</label>
-                    <div class="relative">
-                        <select id="new-med-schedule-type" onchange="window.app.toggleScheduleInputs()" class="w-full p-3 border border-slate-200 rounded-xl mt-1.5 bg-slate-50 font-medium text-slate-700 appearance-none focus:outline-none focus:border-indigo-500">
-                            <option value="daily">Daily</option>
-                            <option value="alternate">Every Other Day</option>
-                            <option value="weekly">Specific Days</option>
-                            <option value="monthly">Once a Month</option>
-                        </select>
-                        <i class="ph-bold ph-caret-down absolute right-3 top-5 text-slate-400 pointer-events-none"></i>
-                    </div>
-                </div>
+                <div><label class="text-xs font-bold text-slate-400 uppercase tracking-wide ml-1">Name</label><input type="text" id="new-med-name" placeholder="e.g. Vitamin D" class="w-full p-3 border border-slate-200 rounded-xl mt-1.5 focus:outline-none focus:border-indigo-500 font-medium text-slate-700"></div>
+                <div><label class="text-xs font-bold text-slate-400 uppercase tracking-wide ml-1">Color Tag</label><div class="flex gap-3 mt-1.5 overflow-x-auto pb-2 no-scrollbar" id="color-picker"></div></div>
+                <div><label class="text-xs font-bold text-slate-400 uppercase tracking-wide ml-1">Frequency</label><div class="relative"><select id="new-med-schedule-type" onchange="window.app.toggleScheduleInputs()" class="w-full p-3 border border-slate-200 rounded-xl mt-1.5 bg-slate-50 font-medium text-slate-700 appearance-none focus:outline-none focus:border-indigo-500"><option value="daily">Daily</option><option value="alternate">Every Other Day</option><option value="weekly">Specific Days</option><option value="monthly">Once a Month</option></select><i class="ph-bold ph-caret-down absolute right-3 top-5 text-slate-400 pointer-events-none"></i></div></div>
                 <div id="schedule-inputs" class="bg-slate-50 p-4 rounded-2xl border border-slate-100">
-                    <div id="input-alternate" class="hidden">
-                        <label class="text-xs font-bold text-slate-500 block mb-1.5">Start Date</label>
-                        <input type="date" id="new-med-start-date" class="w-full p-2.5 border border-slate-200 rounded-lg bg-white text-sm font-medium">
-                    </div>
-                    <div id="input-weekly" class="hidden">
-                        <label class="text-xs font-bold text-slate-500 block mb-3">Repeats On</label>
-                        <div class="flex justify-between gap-1" id="week-checkboxes"></div>
-                    </div>
-                    <div id="input-monthly" class="hidden">
-                         <label class="text-xs font-bold text-slate-500 block mb-1.5">Day of Month</label>
-                         <input type="number" id="new-med-month-day" min="1" max="31" placeholder="1" class="w-full p-2.5 border border-slate-200 rounded-lg bg-white text-sm font-medium">
-                    </div>
+                    <div id="input-alternate" class="hidden"><label class="text-xs font-bold text-slate-500 block mb-1.5">Start Date</label><input type="date" id="new-med-start-date" class="w-full p-2.5 border border-slate-200 rounded-lg bg-white text-sm font-medium"></div>
+                    <div id="input-weekly" class="hidden"><label class="text-xs font-bold text-slate-500 block mb-3">Repeats On</label><div class="flex justify-between gap-1" id="week-checkboxes"></div></div>
+                    <div id="input-monthly" class="hidden"><label class="text-xs font-bold text-slate-500 block mb-1.5">Day of Month</label><input type="number" id="new-med-month-day" min="1" max="31" placeholder="1" class="w-full p-2.5 border border-slate-200 rounded-lg bg-white text-sm font-medium"></div>
                     <div id="input-daily" class="text-xs font-medium text-slate-400 text-center py-2">Reminder every day.</div>
                 </div>
             </div>
-            <div class="flex gap-3 mt-8">
-                <button onclick="document.getElementById('add-med-modal').classList.add('hidden')" class="flex-1 py-3.5 text-slate-500 font-bold text-sm bg-slate-50 rounded-xl hover:bg-slate-100 transition-colors">Cancel</button>
-                <button onclick="window.app.saveNewMedication()" class="flex-1 py-3.5 bg-indigo-600 text-white rounded-xl font-bold text-sm shadow-lg shadow-indigo-200 hover:bg-indigo-700 transition-all btn-press">Save</button>
-            </div>
+            <div class="flex gap-3 mt-8"><button onclick="document.getElementById('add-med-modal').classList.add('hidden')" class="flex-1 py-3.5 text-slate-500 font-bold text-sm bg-slate-50 rounded-xl hover:bg-slate-100 transition-colors">Cancel</button><button onclick="window.app.saveNewMedication()" class="flex-1 py-3.5 bg-indigo-600 text-white rounded-xl font-bold text-sm shadow-lg shadow-indigo-200 hover:bg-indigo-700 transition-all btn-press">Save</button></div>
         </div>
     </div>
 
     <div id="day-details-modal" class="fixed inset-0 bg-slate-900/60 z-[60] hidden flex justify-center items-center p-6 backdrop-blur-sm">
         <div class="bg-white w-full max-w-sm rounded-3xl p-0 shadow-2xl animate-slide-up overflow-hidden ring-1 ring-white/20">
-            <div class="bg-indigo-50/50 p-5 border-b border-indigo-50 flex justify-between items-center">
-                <h3 class="font-extrabold text-lg text-indigo-900" id="detail-date-title">Date</h3>
-                <button onclick="document.getElementById('day-details-modal').classList.add('hidden')" class="w-8 h-8 flex items-center justify-center rounded-full bg-white text-slate-400 hover:text-slate-600 hover:bg-slate-50 transition-colors shadow-sm"><i class="ph-bold ph-x"></i></button>
-            </div>
+            <div class="bg-indigo-50/50 p-5 border-b border-indigo-50 flex justify-between items-center"><h3 class="font-extrabold text-lg text-indigo-900" id="detail-date-title">Date</h3><button onclick="document.getElementById('day-details-modal').classList.add('hidden')" class="w-8 h-8 flex items-center justify-center rounded-full bg-white text-slate-400 hover:text-slate-600 hover:bg-slate-50 transition-colors shadow-sm"><i class="ph-bold ph-x"></i></button></div>
             <div class="p-6 space-y-6 max-h-[60vh] overflow-y-auto">
                 <div id="section-taken"><h4 class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3">Completed</h4><div id="detail-taken-list" class="space-y-2"></div></div>
                 <div><h4 id="detail-missed-title" class="text-[10px] font-bold text-red-400 uppercase tracking-widest mb-3">Missed</h4><div id="detail-missed-list" class="space-y-2"></div></div>
@@ -374,17 +381,16 @@
     <script>
         class MedTracker {
             constructor() {
+                // Date Setup (Executed First)
+                const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+                document.getElementById('current-date-display').textContent = new Date().toLocaleDateString('en-US', options);
+
                 this.today = this.getLocalDateString();
                 const y = new Date(); y.setDate(y.getDate()-1);
                 const yesterday = new Date(y.getTime() - y.getTimezoneOffset()*60000).toISOString().split('T')[0];
                 this.state = {
-                    version: 6, logs: {}, bestStreak: 0, weightLogs: {}, noteLogs: {}, userProfile: { name: "", height: "", unit: "kg" },
-                    medications: [
-                        { id: 'med_blood', name: 'Blood Tablet', color: 'red', schedule: 'daily', scheduleDetails: {} },
-                        { id: 'med_100', name: '100mg', color: 'blue', schedule: 'alternate', scheduleDetails: { startDate: this.today } },
-                        { id: 'med_75', name: '75mg', color: 'teal', schedule: 'alternate', scheduleDetails: { startDate: yesterday } },
-                        { id: 'med_vitd', name: 'Vit D', color: 'amber', schedule: 'weekly', scheduleDetails: { days: [0] } }
-                    ]
+                    version: 7, logs: {}, bestStreak: 0, weightLogs: {}, noteLogs: {}, userProfile: { name: "", height: "", unit: "kg" },
+                    medications: [] // CLEAN SLATE
                 };
                 this.currentCalendarDate = new Date();
                 this.historyPage = 0; this.ITEMS_PER_PAGE = 30;
@@ -392,6 +398,7 @@
                 this.confettiCanvas = document.getElementById('confetti-canvas'); this.ctx = this.confettiCanvas.getContext('2d');
                 this.colors = [ { name: 'blue', bg: 'bg-blue-500', text: 'text-blue-600', ring: 'ring-blue-500' }, { name: 'teal', bg: 'bg-teal-500', text: 'text-teal-600', ring: 'ring-teal-500' }, { name: 'red', bg: 'bg-red-500', text: 'text-red-600', ring: 'ring-red-500' }, { name: 'amber', bg: 'bg-amber-500', text: 'text-amber-600', ring: 'ring-amber-500' }, { name: 'purple', bg: 'bg-purple-500', text: 'text-purple-600', ring: 'ring-purple-500' }, { name: 'emerald', bg: 'bg-emerald-500', text: 'text-emerald-600', ring: 'ring-emerald-500' }, { name: 'indigo', bg: 'bg-indigo-500', text: 'text-indigo-600', ring: 'ring-indigo-500' }, { name: 'rose', bg: 'bg-rose-500', text: 'text-rose-600', ring: 'ring-rose-500' } ];
                 this.selectedColor = 'blue'; this.pendingAction = null; 
+                this.missedAlertDismissed = false;
             }
 
             init() {
@@ -400,9 +407,16 @@
                     if (!Array.isArray(this.state.medications)) this.state.medications = [];
                     this.renderColorPicker(); this.initWeekCheckboxes(); this.resizeCanvas();
                     window.addEventListener('resize', () => this.resizeCanvas());
-                    this.renderUI(); this.setupInputs();
-                    const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-                    document.getElementById('current-date-display').textContent = new Date().toLocaleDateString('en-US', options);
+                    
+                    // ONBOARDING CHECK
+                    const hasSeenHelp = localStorage.getItem('medTracker_hasSeenHelp');
+                    if (!hasSeenHelp) {
+                        this.switchView('help');
+                    } else {
+                        this.switchView('dashboard');
+                    }
+
+                    this.setupInputs();
                     document.getElementById('confirm-yes-btn').onclick = () => this.confirmAction();
                     this.checkBrowserPermission();
                 } catch (e) { console.error(e); if (confirm("Error loading data. Reset?")) { localStorage.removeItem('medTrackerData'); location.reload(); } }
@@ -417,6 +431,41 @@
             saveData() { localStorage.setItem('medTrackerData', JSON.stringify(this.state)); this.renderUI(); }
             saveProfile() { this.state.userProfile.name = document.getElementById('settings-name').value; this.state.userProfile.height = document.getElementById('settings-height').value; this.state.userProfile.unit = document.getElementById('settings-unit').value; this.saveData(); }
 
+            // --- Help / Onboarding ---
+            // 'showHelp' now just switches to the help tab view
+            showHelp() { 
+                this.switchView('help');
+            }
+            
+            finishOnboarding() {
+                localStorage.setItem('medTracker_hasSeenHelp', 'true');
+                this.switchView('dashboard');
+            }
+
+            // --- Missed Dose Logic ---
+            checkMissedYesterday() {
+                if (this.missedAlertDismissed) return null;
+                const y = new Date(); y.setDate(y.getDate() - 1);
+                const yesterdayStr = new Date(y.getTime() - y.getTimezoneOffset() * 60000).toISOString().split('T')[0];
+                const missed = [];
+                (this.state.medications || []).filter(m => !m.deleted).forEach(med => {
+                    if (this.isDue(med, yesterdayStr)) {
+                        const taken = this.state.logs[yesterdayStr] && this.state.logs[yesterdayStr][med.id];
+                        if (!taken) missed.push(med);
+                    }
+                });
+                return missed.length > 0 ? { date: yesterdayStr, meds: missed } : null;
+            }
+            logMissedDose(date, medId) {
+                if (!this.state.logs[date]) this.state.logs[date] = {};
+                this.state.logs[date][medId] = { timestamp: Date.now(), value: true };
+                this.saveData();
+            }
+            dismissMissedAlert() {
+                this.missedAlertDismissed = true;
+                this.renderUI();
+            }
+
             isDue(med, dateStr) {
                 if (med.deleted) return false;
                 if (med.schedule === 'daily') return true;
@@ -426,15 +475,7 @@
                 if (med.schedule === 'alternate') { if (!med.scheduleDetails.startDate) return true; const start = new Date(med.scheduleDetails.startDate + 'T00:00:00'); const diffTime = checkDate - start; const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24)); return diffDays >= 0 && diffDays % 2 === 0; }
                 return false;
             }
-            checkStatus(med) {
-                const isTaken = this.state.logs[this.today] && this.state.logs[this.today][med.id];
-                const dueToday = this.isDue(med, this.today);
-                if (isTaken) return { status: 'taken', text: 'Taken' };
-                if (dueToday) return { status: 'due', text: 'Due Today' };
-                if (med.schedule === 'daily') return { status: 'neutral', text: 'Daily' };
-                return { status: 'skip', text: 'Rest Day' };
-            }
-
+            checkStatus(med) { const isTaken = this.state.logs[this.today] && this.state.logs[this.today][med.id]; const dueToday = this.isDue(med, this.today); if (isTaken) return { status: 'taken', text: 'Taken' }; if (dueToday) return { status: 'due', text: 'Due Today' }; if (med.schedule === 'daily') return { status: 'neutral', text: 'Daily' }; return { status: 'skip', text: 'Rest Day' }; }
             calculateStats() {
                 const activeMeds = (this.state.medications || []).filter(m => !m.deleted);
                 if (activeMeds.length === 0) return { streak: 0, bestStreak: this.state.bestStreak, adherence: 0 };
@@ -458,35 +499,74 @@
                 const adherence = daysChecked === 0 ? 0 : Math.round((daysPerfect / daysChecked) * 100);
                 return { streak, bestStreak: this.state.bestStreak, adherence };
             }
+            getDayCompletionStatus(dateStr) { const logs = this.state.logs[dateStr] || {}; const takenIds = Object.keys(logs); let required = 0; let taken = 0; (this.state.medications || []).filter(m => !m.deleted).forEach(med => { if (this.isDue(med, dateStr)) { required++; if (takenIds.includes(med.id)) taken++; } }); return { required, taken, complete: required > 0 && required === taken }; }
+            toggleLog(medId) { if (!this.state.logs[this.today]) this.state.logs[this.today] = {}; if (this.state.logs[this.today][medId]) { delete this.state.logs[this.today][medId]; if (Object.keys(this.state.logs[this.today]).length === 0) delete this.state.logs[this.today]; this.saveData(); this.showToast("Marked as Not Taken"); } else { this.state.logs[this.today][medId] = { timestamp: Date.now(), value: true }; this.saveData(); this.showToast("Logged!"); if (this.getDayCompletionStatus(this.today).complete) this.triggerCelebration(); } }
 
-            getDayCompletionStatus(dateStr) {
-                const logs = this.state.logs[dateStr] || {}; const takenIds = Object.keys(logs);
-                let required = 0; let taken = 0;
-                (this.state.medications || []).filter(m => !m.deleted).forEach(med => { if (this.isDue(med, dateStr)) { required++; if (takenIds.includes(med.id)) taken++; } });
-                return { required, taken, complete: required > 0 && required === taken };
-            }
-
-            renderGamification() {
-                const stats = this.calculateStats();
-                const sEl = document.getElementById('streak-count'); if(sEl) sEl.textContent = stats.streak;
-                const bEl = document.getElementById('best-streak-count'); if(bEl) bEl.textContent = stats.bestStreak;
-                const icon = document.getElementById('streak-fire-icon');
-                const msg = document.getElementById('streak-message');
-                if(icon && msg) {
-                    if (stats.streak > 0) { icon.classList.add('text-orange-400', 'pulse-fire'); icon.classList.remove('text-slate-300'); msg.textContent = stats.streak > 3 ? "You're on fire! 🔥" : "Good start!"; }
-                    else { icon.classList.remove('text-orange-400', 'pulse-fire'); icon.classList.add('text-slate-300'); msg.textContent = "Start a streak today!"; }
-                }
-                const aEl = document.getElementById('adherence-rate'); if(aEl) aEl.textContent = stats.adherence + "%";
+            renderUI() { 
+                this.renderGamification(); 
+                this.renderDashboard(); 
+                this.renderHistoryList(); 
+                this.renderCalendar(); 
+                this.renderSettingsList(); 
+                this.renderNotifications(); 
+                this.renderJournal();
+                if(document.getElementById('view-journal') && !document.getElementById('view-journal').classList.contains('hidden')) this.drawChart(); 
             }
             
             renderDashboard() {
                 const container = document.getElementById('medication-cards-container');
+                const alertContainer = document.getElementById('missed-dose-alert-container');
                 container.innerHTML = '';
+                alertContainer.innerHTML = '';
+
+                // Missed Dose Alert Check
+                const missedData = this.checkMissedYesterday();
+                if (missedData) {
+                    let alertHTML = `
+                        <div class="bg-orange-50 border border-orange-200 rounded-2xl p-4 mb-6 animate-pop-in relative overflow-hidden">
+                            <div class="flex justify-between items-start mb-3 relative z-10">
+                                <div class="flex items-center gap-2">
+                                    <div class="w-8 h-8 rounded-full bg-orange-100 flex items-center justify-center text-orange-600"><i class="ph-bold ph-warning"></i></div>
+                                    <div><h4 class="font-bold text-orange-800 text-sm">Missed Yesterday</h4><p class="text-xs text-orange-600">Did you forget to log?</p></div>
+                                </div>
+                                <button onclick="window.app.dismissMissedAlert()" class="text-orange-400 hover:text-orange-600"><i class="ph-bold ph-x"></i></button>
+                            </div>
+                            <div class="space-y-2 relative z-10">
+                    `;
+                    missedData.meds.forEach(med => {
+                        alertHTML += `
+                            <div class="flex justify-between items-center bg-white/60 rounded-lg p-2">
+                                <span class="text-sm font-bold text-slate-700 ml-2">${med.name}</span>
+                                <button onclick="window.app.logMissedDose('${missedData.date}', '${med.id}')" class="text-xs font-bold text-orange-600 bg-orange-100 hover:bg-orange-200 px-3 py-1.5 rounded-lg transition-colors">I Took It</button>
+                            </div>
+                        `;
+                    });
+                    alertHTML += `</div></div>`;
+                    alertContainer.innerHTML = alertHTML;
+                }
+
                 const activeMeds = (this.state.medications || []).filter(m => !m.deleted);
+                
+                // Enhanced Empty State
                 if (activeMeds.length === 0) {
-                    container.innerHTML = `<div class="text-center py-10 bg-white/50 rounded-3xl border border-dashed border-slate-300"><div class="w-16 h-16 bg-white rounded-full flex items-center justify-center mx-auto shadow-sm mb-4"><i class="ph-fill ph-pill-plus text-3xl text-indigo-400"></i></div><h3 class="font-bold text-slate-700 text-lg mb-1">No medications yet</h3><p class="text-xs text-slate-400 mb-5 max-w-[200px] mx-auto">Add your first pill to start tracking your daily streak.</p><button onclick="window.app.openAddMedModal()" class="px-6 py-3 bg-indigo-600 text-white rounded-full font-bold shadow-lg shadow-indigo-200 hover:bg-indigo-700 transition-all btn-press flex items-center gap-2 mx-auto animate-bounce"><i class="ph-bold ph-plus"></i> Add Medication</button></div>`;
+                    container.innerHTML = `
+                        <div class="text-center py-12 bg-white/60 rounded-3xl border border-dashed border-indigo-200 flex flex-col items-center">
+                            <div class="w-20 h-20 bg-white rounded-full flex items-center justify-center shadow-sm mb-5">
+                                <i class="ph-fill ph-pill-plus text-4xl text-indigo-400"></i>
+                            </div>
+                            <h3 class="font-bold text-slate-700 text-xl mb-2">No medications yet</h3>
+                            <p class="text-sm text-slate-400 mb-8 max-w-[240px] leading-relaxed">Add your first pill to start building your daily streak!</p>
+                            <button onclick="window.app.openAddMedModal()" class="px-8 py-4 bg-indigo-600 text-white rounded-2xl font-bold shadow-lg shadow-indigo-200 hover:bg-indigo-700 transition-all btn-press flex items-center gap-2 animate-bounce">
+                                <i class="ph-bold ph-plus text-lg"></i> Add Medication
+                            </button>
+                            <button onclick="window.app.toggleSettings()" class="mt-4 text-xs font-bold text-slate-400 hover:text-indigo-600">
+                                Complete Profile
+                            </button>
+                        </div>
+                    `;
                     return;
                 }
+                
                 activeMeds.forEach(med => {
                     const status = this.checkStatus(med);
                     const colorData = this.colors.find(c => c.name === med.color) || this.colors[0];
@@ -496,29 +576,58 @@
                     button.onclick = (e) => { e.stopPropagation(); this.toggleLog(med.id); };
                     button.className = "h-10 px-5 rounded-full font-bold text-sm transition-all shadow-sm btn-press flex items-center gap-1.5 z-10 cursor-pointer";
                     let iconHTML = '';
-
                     if (status.status === 'taken') {
                         card.className += " bg-emerald-50/50 border-emerald-100 opacity-80";
                         button.className += " bg-emerald-100 text-emerald-700 hover:bg-red-50 hover:text-red-600 hover:border-red-200 border border-transparent group";
                         button.innerHTML = `<span class="group-hover:hidden flex items-center gap-1"><i class="ph-bold ph-check text-lg"></i> Done</span><span class="hidden group-hover:flex items-center gap-1"><i class="ph-bold ph-arrow-u-up-left"></i> Undo</span>`;
                         iconHTML = `<div class="flex items-center gap-4 z-10"><div class="w-12 h-12 rounded-xl bg-emerald-100 flex items-center justify-center text-emerald-600 text-2xl shadow-sm"><i class="ph-fill ph-check-circle"></i></div><div><h3 class="font-bold text-slate-700">${med.name}</h3><p class="text-xs font-semibold text-emerald-600">Completed</p></div></div>`;
-                    } 
-                    else if (status.status === 'due') {
+                    } else if (status.status === 'due') {
                         card.className += " bg-white border-slate-100 shadow-lg shadow-slate-200/50 scale-[1.02]";
                         button.className += " bg-indigo-600 text-white shadow-md shadow-indigo-300 hover:bg-indigo-700";
                         button.innerHTML = 'Take';
                         iconHTML = `<div class="flex items-center gap-4 z-10"><div class="w-12 h-12 rounded-xl ${colorData.bg.replace('bg-', 'bg-').replace('500', '100')} flex items-center justify-center ${colorData.text} text-2xl shadow-inner"><i class="ph-fill ph-pill"></i></div><div><h3 class="font-bold text-slate-800">${med.name}</h3><p class="text-xs font-bold text-indigo-500 animate-pulse">Due Today</p></div></div>`;
-                    } 
-                    else {
+                    } else {
                         card.className += " bg-white border-slate-100 opacity-60 grayscale-[0.5]";
                         button.className += " bg-slate-100 text-slate-400";
                         if(status.status === 'skip') { button.disabled = true; button.textContent = "Rest"; } else { button.textContent = "Log"; }
                         iconHTML = `<div class="flex items-center gap-4 z-10"><div class="w-12 h-12 rounded-xl bg-slate-100 flex items-center justify-center text-slate-400 text-2xl"><i class="ph-fill ph-pill"></i></div><div><h3 class="font-bold text-slate-600">${med.name}</h3><p class="text-xs text-slate-400">${status.text}</p></div></div>`;
                     }
-                    card.insertAdjacentHTML('afterbegin', iconHTML);
-                    card.appendChild(button);
-                    container.appendChild(card);
+                    card.insertAdjacentHTML('afterbegin', iconHTML); card.appendChild(button); container.appendChild(card);
                 });
+
+                // Add "Add New" button at bottom of list if meds exist
+                const addBtn = document.createElement('button');
+                addBtn.onclick = () => window.app.openAddMedModal();
+                addBtn.className = "w-full py-3 mt-2 bg-white border-2 border-dashed border-slate-200 rounded-2xl text-slate-400 font-bold text-sm hover:border-indigo-300 hover:text-indigo-500 hover:bg-indigo-50 transition-all btn-press flex items-center justify-center gap-2 group";
+                addBtn.innerHTML = '<i class="ph-bold ph-plus-circle text-lg group-hover:scale-110 transition-transform"></i> Add Medication';
+                container.appendChild(addBtn);
+            }
+            
+            renderGamification() { 
+                const stats = this.calculateStats(); 
+                const streakEl = document.getElementById('streak-count');
+                if(streakEl) streakEl.textContent = stats.streak; 
+                
+                const bestEl = document.getElementById('best-streak-count');
+                if(bestEl) bestEl.textContent = stats.bestStreak; 
+                
+                const fireIcon = document.getElementById('streak-fire-icon'); 
+                const msg = document.getElementById('streak-message'); 
+                
+                if (fireIcon && msg) {
+                    if (stats.streak > 0) { 
+                        fireIcon.classList.add('text-orange-400', 'pulse-fire'); 
+                        fireIcon.classList.remove('text-slate-300'); 
+                        msg.textContent = stats.streak > 3 ? "You're on fire! 🔥" : "Good start!"; 
+                    } else { 
+                        fireIcon.classList.remove('text-orange-400', 'pulse-fire'); 
+                        fireIcon.classList.add('text-slate-300'); 
+                        msg.textContent = "Start a streak today!"; 
+                    } 
+                }
+                
+                const adhereEl = document.getElementById('adherence-rate');
+                if(adhereEl) adhereEl.textContent = stats.adherence + "%"; 
             }
             
             renderHistoryList() {
@@ -531,9 +640,7 @@
                 const end = start + this.ITEMS_PER_PAGE;
                 const pageDates = allDates.slice(start, end);
                 pageInd.textContent = `${this.historyPage + 1} / ${totalPages || 1}`; prevBtn.disabled = this.historyPage === 0; nextBtn.disabled = end >= allDates.length;
-
                 if (pageDates.length === 0) { list.innerHTML = '<div class="text-center text-slate-300 text-xs font-medium py-8">No medication history</div>'; return; }
-
                 pageDates.forEach(date => {
                     const dayLogs = this.state.logs[date]; if (!dayLogs) return;
                     const d = new Date(date + 'T00:00:00');
@@ -733,15 +840,17 @@
             
             // --- View Switching ---
             switchView(viewName) {
-                ['dashboard', 'journal', 'calendar'].forEach(v => {
+                ['help', 'dashboard', 'journal', 'calendar'].forEach(v => {
                     const el = document.getElementById('view-' + v);
                     const btn = document.getElementById('nav-' + v);
-                    if (v === viewName) {
-                        el.classList.remove('hidden');
-                        btn.className = "flex items-center gap-2 px-5 py-3 rounded-full bg-indigo-600 text-white shadow-md transition-all duration-300";
-                    } else {
-                        el.classList.add('hidden');
-                        btn.className = "flex items-center gap-2 px-5 py-3 rounded-full text-slate-500 hover:bg-slate-50 transition-all duration-300";
+                    if (el) {
+                        if (v === viewName) {
+                            el.classList.remove('hidden');
+                            if(btn) btn.className = "flex items-center gap-2 px-5 py-3 rounded-full bg-indigo-600 text-white shadow-md transition-all duration-300";
+                        } else {
+                            el.classList.add('hidden');
+                            if(btn) btn.className = "flex items-center gap-2 px-5 py-3 rounded-full text-slate-500 hover:bg-slate-50 transition-all duration-300";
+                        }
                     }
                 });
                 if (viewName === 'calendar') this.renderCalendar();
@@ -787,7 +896,7 @@
             deleteMedication(id) { this.showConfirm("Archive this medication? History will be kept.", () => { const medIndex = this.state.medications.findIndex(m => m.id === id); if (medIndex !== -1) { this.state.medications[medIndex].deleted = true; this.saveData(); } }); }
             exportJSON() { const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(this.state)); const node = document.createElement('a'); node.setAttribute("href", dataStr); node.setAttribute("download", "med_tracker_backup.json"); document.body.appendChild(node); node.click(); node.remove(); }
             importData(input) { const file = input.files[0]; if(!file) return; const reader = new FileReader(); reader.onload = (e) => { try { const json = JSON.parse(e.target.result); if(json.medications) { this.state = json; if(!json.version || json.version < 6) this.migrateToV4(json); this.saveData(); this.showToast("Restored!"); this.toggleSettings(); } } catch { alert("Invalid"); } }; reader.readAsText(file); }
-            clearAllData() { this.showConfirm("Reset everything? This cannot be undone.", () => { localStorage.removeItem('medTrackerData'); location.reload(); }); }
+            clearAllData() { this.showConfirm("Reset everything? This cannot be undone.", () => { localStorage.removeItem('medTrackerData'); localStorage.removeItem('medTracker_hasSeenHelp'); location.reload(); }); }
             generateMockData() { this.showConfirm("Overwrite with 100 days of test data?", () => { this.state.logs = {}; this.state.weightLogs = {}; this.state.noteLogs = {}; const meds = (this.state.medications || []).filter(m => !m.deleted); const today = new Date(); for (let i = 0; i < 100; i++) { const d = new Date(); d.setDate(today.getDate() - i); const dateStr = new Date(d.getTime() - d.getTimezoneOffset()*60000).toISOString().split('T')[0]; this.state.logs[dateStr] = {}; meds.forEach(med => { if (this.isDue(med, dateStr)) { if (Math.random() > 0.1) this.state.logs[dateStr][med.id] = { timestamp: Date.now(), value: true }; } }); if (Object.keys(this.state.logs[dateStr]).length === 0) delete this.state.logs[dateStr]; if (Math.random() > 0.7) this.state.weightLogs[dateStr] = (70 + Math.random() * 2).toFixed(1); if (Math.random() > 0.8) this.state.noteLogs[dateStr] = "Feeling great today!"; } this.saveData(); this.showToast("Test data generated"); this.toggleSettings(); }); }
             generateCalendar() { let icsContent = "BEGIN:VCALENDAR\nVERSION:2.0\nPRODID:-//MedTracker//App//EN\n"; const currentUrl = window.location.href; (this.state.medications || []).filter(m => !m.deleted).forEach(med => { let start = new Date(); start.setHours(9, 0, 0, 0); let rrule = ""; let isValid = true; if (med.schedule === 'daily') rrule = "FREQ=DAILY"; else if (med.schedule === 'weekly') { const daysMap = ['SU', 'MO', 'TU', 'WE', 'TH', 'FR', 'SA']; const selectedDays = med.scheduleDetails.days.map(d => daysMap[d]).join(','); rrule = `FREQ=WEEKLY;BYDAY=${selectedDays}`; } else if (med.schedule === 'monthly') { const dayOfMonth = med.scheduleDetails.dayOfMonth; start.setDate(dayOfMonth); if (start < new Date()) start.setMonth(start.getMonth() + 1); rrule = `FREQ=MONTHLY;BYMONTHDAY=${dayOfMonth}`; } else if (med.schedule === 'alternate') { const genesisStr = med.scheduleDetails.startDate; if (!genesisStr) { isValid = false; } else { const genesis = new Date(genesisStr + 'T00:00:00'); const todayStr = this.getLocalDateString(); const checkDate = new Date(todayStr + 'T00:00:00'); const diffTime = checkDate - genesis; const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24)); if (diffDays % 2 !== 0) start.setDate(start.getDate() + 1); rrule = "FREQ=DAILY;INTERVAL=2"; } } if (isValid) { const pad = (n) => n < 10 ? '0' + n : n; const dateString = `${start.getFullYear()}${pad(start.getMonth() + 1)}${pad(start.getDate())}T090000`; icsContent += "BEGIN:VEVENT\n"; icsContent += `UID:${med.id}@medtracker.local\n`; icsContent += `DTSTART:${dateString}\n`; if(rrule) icsContent += `RRULE:${rrule}\n`; icsContent += `SUMMARY:Take ${med.name}\n`; icsContent += `DESCRIPTION:Log dose here: ${currentUrl}\n`; icsContent += "BEGIN:VALARM\nTRIGGER:-PT0M\nACTION:DISPLAY\nDESCRIPTION:Reminder\nEND:VALARM\n"; icsContent += "END:VEVENT\n"; } }); icsContent += "END:VCALENDAR"; const blob = new Blob([icsContent], { type: 'text/calendar' }); const url = window.URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = "med_schedule.ics"; document.body.appendChild(a); a.click(); document.body.removeChild(a); window.URL.revokeObjectURL(url); this.showToast("Calendar file generated!"); }
             checkBrowserPermission() { const icon = document.getElementById('browser-notif-icon'); if(!icon) return; if (!("Notification" in window)) { icon.className = "ph-bold ph-x-circle text-2xl text-red-300"; return; } if (Notification.permission === "granted") icon.className = "ph-fill ph-toggle-right text-2xl text-green-500"; else if (Notification.permission === "denied") icon.className = "ph-bold ph-toggle-left text-2xl text-red-300"; else icon.className = "ph-bold ph-toggle-left text-2xl text-slate-300"; }
