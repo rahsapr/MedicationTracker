@@ -134,8 +134,8 @@
     </header>
 
     <!-- Notification Panel -->
-    <div id="notification-panel" class="absolute top-20 right-5 w-72 glass-card rounded-2xl shadow-xl z-50 hidden animate-pop-in origin-top-right">
-        <div class="p-4 border-b border-slate-100 flex justify-between items-center bg-white/50 rounded-t-2xl">
+    <div id="notification-panel" class="absolute top-20 right-5 w-72 glass-card rounded-2xl shadow-xl z-50 hidden animate-pop-in origin-top-right bg-white">
+        <div class="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-50 rounded-t-2xl">
             <h3 class="font-bold text-sm text-slate-700">Due Today</h3>
             <button onclick="document.getElementById('notification-panel').classList.add('hidden')" class="text-slate-400 hover:text-slate-600"><i class="ph-bold ph-x"></i></button>
         </div>
@@ -338,13 +338,21 @@
                 <button onclick="window.app.toggleSettings()" class="p-2 bg-slate-100 rounded-full text-slate-600 hover:bg-slate-200 transition-colors"><i class="ph-bold ph-x text-lg"></i></button>
             </div>
             <div class="overflow-y-auto p-6 space-y-8 pb-10">
+                <section class="bg-slate-50 p-4 rounded-xl border border-slate-200">
+                    <h3 class="text-xs font-bold text-slate-400 uppercase mb-2">Storage Diagnostics</h3>
+                    <div class="grid grid-cols-2 gap-2 text-xs">
+                        <div class="text-slate-500">Status: <span id="storage-status" class="font-bold text-green-600">Checking...</span></div>
+                        <div class="text-slate-500">Size: <span id="storage-size" class="font-bold">0 KB</span></div>
+                        <div class="col-span-2 text-slate-400 italic" id="storage-time">Last Saved: Never</div>
+                    </div>
+                </section>
                 <section>
                     <h3 class="font-bold text-lg text-slate-800 mb-3">Profile</h3>
                     <div class="space-y-3">
-                        <div><label class="text-xs font-bold text-slate-400 uppercase ml-1">Name</label><input type="text" id="settings-name" onchange="window.app.saveProfile()" placeholder="Your Name" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl mt-1 text-sm font-bold text-slate-700"></div>
+                        <div><label class="text-xs font-bold text-slate-400 uppercase ml-1">Name</label><input type="text" id="settings-name" placeholder="Your Name" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl mt-1 text-sm font-bold text-slate-700"></div>
                         <div class="flex gap-3">
-                            <div class="flex-1"><label class="text-xs font-bold text-slate-400 uppercase ml-1">Height (cm)</label><input type="number" id="settings-height" onchange="window.app.saveProfile()" placeholder="175" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl mt-1 text-sm font-bold text-slate-700"></div>
-                            <div class="flex-1"><label class="text-xs font-bold text-slate-400 uppercase ml-1">Weight Unit</label><select id="settings-unit" onchange="window.app.saveProfile()" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl mt-1 text-sm font-bold text-slate-700"><option value="kg">Metric (kg)</option><option value="lbs">Imperial (lbs)</option></select></div>
+                            <div class="flex-1"><label class="text-xs font-bold text-slate-400 uppercase ml-1">Height (cm)</label><input type="number" id="settings-height" placeholder="175" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl mt-1 text-sm font-bold text-slate-700"></div>
+                            <div class="flex-1"><label class="text-xs font-bold text-slate-400 uppercase ml-1">Weight Unit</label><select id="settings-unit" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl mt-1 text-sm font-bold text-slate-700"><option value="kg">Metric (kg)</option><option value="lbs">Imperial (lbs)</option></select></div>
                         </div>
                     </div>
                 </section>
@@ -355,7 +363,14 @@
                 </section>
                 <section><div class="flex justify-between items-end mb-3"><h3 class="font-bold text-lg text-slate-800">My Medications</h3><button onclick="window.app.openAddMedModal()" class="text-xs font-bold text-white bg-indigo-600 px-3 py-1.5 rounded-full hover:bg-indigo-700 shadow-md shadow-indigo-200 transition-all btn-press flex items-center gap-1"><i class="ph-bold ph-plus"></i> Add New</button></div><div id="settings-med-list" class="space-y-3"></div></section>
                 <section class="border-t border-slate-100 pt-6"><h3 class="font-bold text-lg text-slate-800 mb-3">Data</h3><div class="grid grid-cols-1 gap-3"><div class="grid grid-cols-2 gap-3"><button onclick="window.app.exportCSV()" class="flex items-center justify-center gap-2 p-3.5 bg-green-50 text-green-700 hover:bg-green-100 border border-green-100 rounded-xl text-sm font-bold btn-press transition-colors"><i class="ph-bold ph-file-csv"></i> Export CSV</button><button onclick="window.app.exportJSON()" class="flex items-center justify-center gap-2 p-3.5 bg-slate-50 hover:bg-slate-100 border border-slate-100 rounded-xl text-sm font-bold text-slate-600 btn-press transition-colors"><i class="ph-bold ph-download-simple"></i> Backup</button></div><label class="flex items-center justify-center gap-2 p-3.5 bg-slate-50 rounded-xl text-sm font-bold text-slate-600 btn-press cursor-pointer hover:bg-slate-100 border border-slate-100 transition-colors"><i class="ph-bold ph-upload-simple"></i> Restore Backup<input type="file" id="import-file" class="hidden" accept=".json" onchange="window.app.importData(this)"></label></div></section>
-                <section class="pt-6 border-t border-slate-100"><button onclick="window.app.generateMockData()" class="w-full mb-3 p-3.5 text-blue-600 bg-blue-50 hover:bg-blue-100 border border-blue-100 rounded-xl text-sm font-bold transition-colors btn-press"><i class="ph-bold ph-flask"></i> Generate 100 Days Data</button><button onclick="window.app.clearAllData()" class="w-full p-3.5 text-red-600 bg-red-50 hover:bg-red-100 border border-red-100 rounded-xl text-sm font-bold transition-colors btn-press">Reset App Data</button><p class="text-center text-[10px] font-bold text-slate-300 mt-4 uppercase tracking-widest">v8.1.2 • Stability</p></section>
+                <section class="pt-6 border-t border-slate-100"><button onclick="window.app.generateMockData()" class="w-full mb-3 p-3.5 text-blue-600 bg-blue-50 hover:bg-blue-100 border border-blue-100 rounded-xl text-sm font-bold transition-colors btn-press"><i class="ph-bold ph-flask"></i> Generate 100 Days Data</button><button onclick="window.app.clearAllData()" class="w-full p-3.5 text-red-600 bg-red-50 hover:bg-red-100 border border-red-100 rounded-xl text-sm font-bold transition-colors btn-press">Reset App Data</button><p class="text-center text-[10px] font-bold text-slate-300 mt-4 uppercase tracking-widest">v8.5.0 • Save Button</p></section>
+                
+                <!-- SAVE BUTTON -->
+                <div class="sticky bottom-0 bg-white pt-4 pb-2 border-t border-slate-100">
+                    <button onclick="window.app.saveSettings()" class="w-full py-4 bg-indigo-600 text-white rounded-xl font-bold shadow-lg shadow-indigo-200 hover:bg-indigo-700 transition-all btn-press flex items-center justify-center gap-2">
+                        <i class="ph-bold ph-check-circle"></i> Save Changes
+                    </button>
+                </div>
             </div>
         </div>
     </div>
@@ -395,11 +410,15 @@
     <script>
         class MedTracker {
             constructor() {
+                console.log("Initializing App...");
                 const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
                 const dateDisplay = document.getElementById('current-date-display');
                 if (dateDisplay) dateDisplay.textContent = new Date().toLocaleDateString('en-US', options);
                 
                 this.today = this.getLocalDateString();
+                const y = new Date(); y.setDate(y.getDate()-1);
+                const yesterday = new Date(y.getTime() - y.getTimezoneOffset()*60000).toISOString().split('T')[0];
+                
                 this.state = {
                     version: 8, logs: {}, bestStreak: 0, weightLogs: {}, noteLogs: {}, 
                     userProfile: { name: "", height: "", unit: "kg" },
@@ -409,38 +428,49 @@
                 this.currentCalendarDate = new Date();
                 this.historyPage = 0; this.ITEMS_PER_PAGE = 30;
                 this.journalPage = 0; this.chartRange = 'all';
-                this.confettiCanvas = document.getElementById('confetti-canvas'); this.ctx = this.confettiCanvas ? this.confettiCanvas.getContext('2d') : null;
+                this.confettiCanvas = document.getElementById('confetti-canvas'); 
+                this.ctx = this.confettiCanvas ? this.confettiCanvas.getContext('2d') : null;
                 this.colors = [ { name: 'blue', bg: 'bg-blue-500', text: 'text-blue-600', ring: 'ring-blue-500' }, { name: 'teal', bg: 'bg-teal-500', text: 'text-teal-600', ring: 'ring-teal-500' }, { name: 'red', bg: 'bg-red-500', text: 'text-red-600', ring: 'ring-red-500' }, { name: 'amber', bg: 'bg-amber-500', text: 'text-amber-600', ring: 'ring-amber-500' }, { name: 'purple', bg: 'bg-purple-500', text: 'text-purple-600', ring: 'ring-purple-500' }, { name: 'emerald', bg: 'bg-emerald-500', text: 'text-emerald-600', ring: 'ring-emerald-500' }, { name: 'indigo', bg: 'bg-indigo-500', text: 'text-indigo-600', ring: 'ring-indigo-500' }, { name: 'rose', bg: 'bg-rose-500', text: 'text-rose-600', ring: 'ring-rose-500' } ];
                 this.selectedColor = 'blue'; this.pendingAction = null; this.missedAlertDismissed = false;
                 this.currentTutorialView = null;
+
+                // Bind methods to ensure context
+                this.openAddMedModal = this.openAddMedModal.bind(this);
+                this.saveNewMedication = this.saveNewMedication.bind(this);
+                this.deleteMedication = this.deleteMedication.bind(this);
+                
+                // Init
+                this.init();
             }
 
             init() {
-                // Force layout refresh on init to fix rendering bugs
-                requestAnimationFrame(() => {
-                    try {
-                        this.loadData();
-                        if (!Array.isArray(this.state.medications)) this.state.medications = [];
-                        this.renderColorPicker(); this.initWeekCheckboxes(); this.resizeCanvas();
-                        window.addEventListener('resize', () => this.resizeCanvas());
-                        
-                        const hasSeenHelp = localStorage.getItem('medTracker_hasSeenHelp');
-                        if (!hasSeenHelp) {
-                            this.switchView('help');
-                        } else {
-                            this.switchView('dashboard');
-                        }
+                try {
+                    this.loadData();
+                    if (!Array.isArray(this.state.medications)) this.state.medications = [];
+                    this.renderColorPicker(); this.initWeekCheckboxes(); this.resizeCanvas();
+                    window.addEventListener('resize', () => this.resizeCanvas());
+                    window.addEventListener('beforeunload', () => this.saveData()); // Autosave on close
+                    
+                    const hasSeenHelp = localStorage.getItem('medTracker_hasSeenHelp');
+                    if (!hasSeenHelp) {
+                        this.switchView('help');
+                    } else {
+                        this.switchView('dashboard');
+                    }
 
-                        this.setupInputs();
-                        const confirmBtn = document.getElementById('confirm-yes-btn');
-                        if(confirmBtn) confirmBtn.onclick = () => this.confirmAction();
-                        this.checkBrowserPermission();
-                    } catch (e) { console.error(e); } // Removed intrusive alert
-                });
+                    this.setupInputs();
+                    const confirmBtn = document.getElementById('confirm-yes-btn');
+                    if(confirmBtn) confirmBtn.onclick = () => this.confirmAction();
+                    this.checkBrowserPermission();
+                    this.updateStorageStatus();
+                    console.log("App Initialized");
+                } catch (e) { console.error("Init Failed", e); }
             }
+
+            // --- MEDICATION MANAGEMENT (RESTORED & EXPANDED) ---
             
-            // --- MEDICATION MANAGEMENT (EXPANDED) ---
             openAddMedModal() {
+                console.log("Opening Add Med Modal");
                 const nameInput = document.getElementById('new-med-name');
                 const typeInput = document.getElementById('new-med-schedule-type');
                 const startInput = document.getElementById('new-med-start-date');
@@ -460,6 +490,7 @@
             }
 
             saveNewMedication() {
+                console.log("Saving New Medication");
                 const nameInput = document.getElementById('new-med-name');
                 const typeInput = document.getElementById('new-med-schedule-type');
                 
@@ -513,7 +544,62 @@
                 });
             }
 
-            // --- Tutorial System ---
+            // --- STORAGE & DATA ---
+
+            updateStorageStatus() {
+                const statusEl = document.getElementById('storage-status');
+                const sizeEl = document.getElementById('storage-size');
+                const timeEl = document.getElementById('storage-time');
+                
+                if (typeof(Storage) !== "undefined") {
+                    if(statusEl) { statusEl.textContent = "Available"; statusEl.className = "font-bold text-green-600"; }
+                    const data = JSON.stringify(this.state);
+                    const size = new Blob([data]).size;
+                    if(sizeEl) sizeEl.textContent = (size / 1024).toFixed(2) + " KB";
+                    if(timeEl) timeEl.textContent = "Last Saved: " + new Date().toLocaleTimeString();
+                } else {
+                    if(statusEl) { statusEl.textContent = "Unavailable"; statusEl.className = "font-bold text-red-600"; }
+                }
+            }
+
+            saveData() { 
+                try {
+                    localStorage.setItem('medTrackerData', JSON.stringify(this.state)); 
+                    this.updateStorageStatus();
+                    this.renderUI();
+                } catch(e) {
+                    console.error("Save failed", e);
+                    this.showToast("Error saving data");
+                }
+            }
+
+            // --- VIEW LOGIC ---
+
+            switchView(viewName) {
+                ['help', 'dashboard', 'journal', 'calendar'].forEach(v => {
+                    const el = document.getElementById('view-' + v);
+                    const btn = document.getElementById('nav-' + v);
+                    if (el) {
+                        if (v === viewName) {
+                            el.classList.remove('hidden');
+                            if(btn) btn.className = "flex items-center gap-2 px-5 py-3 rounded-full bg-indigo-600 text-white shadow-md transition-all duration-300";
+                        } else {
+                            el.classList.add('hidden');
+                            if(btn) btn.className = "flex items-center gap-2 px-5 py-3 rounded-full text-slate-500 hover:bg-slate-50 transition-all duration-300";
+                        }
+                    }
+                });
+                
+                if (['dashboard', 'journal', 'calendar'].includes(viewName)) {
+                    setTimeout(() => this.showTutorial(viewName), 500);
+                }
+
+                if (viewName === 'calendar') this.renderCalendar();
+                if (viewName === 'journal') { this.renderJournal(); setTimeout(() => this.drawChart(), 100); }
+                if (viewName === 'dashboard') this.renderDashboard();
+            }
+
+            // --- TUTORIALS ---
             showTutorial(view) {
                 if (this.state.tutorialsSeen && this.state.tutorialsSeen[view]) return;
                 const tutorialContent = {
@@ -548,32 +634,7 @@
                 }
             }
 
-            // --- Core Navigation ---
-            switchView(viewName) {
-                ['help', 'dashboard', 'journal', 'calendar'].forEach(v => {
-                    const el = document.getElementById('view-' + v);
-                    const btn = document.getElementById('nav-' + v);
-                    if (el) {
-                        if (v === viewName) {
-                            el.classList.remove('hidden');
-                            if(btn) btn.className = "flex items-center gap-2 px-5 py-3 rounded-full bg-indigo-600 text-white shadow-md transition-all duration-300";
-                        } else {
-                            el.classList.add('hidden');
-                            if(btn) btn.className = "flex items-center gap-2 px-5 py-3 rounded-full text-slate-500 hover:bg-slate-50 transition-all duration-300";
-                        }
-                    }
-                });
-                
-                if (['dashboard', 'journal', 'calendar'].includes(viewName)) {
-                    setTimeout(() => this.showTutorial(viewName), 500);
-                }
-
-                if (viewName === 'calendar') this.renderCalendar();
-                if (viewName === 'journal') { this.renderJournal(); setTimeout(() => this.drawChart(), 100); }
-                if (viewName === 'dashboard') this.renderDashboard();
-            }
-
-            // --- Standard Methods ---
+            // --- STANDARD UTILS ---
             setupInputs() { 
                 const startDateInput = document.getElementById('new-med-start-date');
                 if(startDateInput) startDateInput.value = this.today; 
@@ -587,8 +648,9 @@
                 if (saved) { 
                     try { 
                         const parsed = JSON.parse(saved); 
-                        if(!parsed.version || parsed.version < 6) {
-                             this.state = { ...this.state, ...parsed, version: 6, weightLogs: parsed.weightLogs || {}, noteLogs: parsed.noteLogs || {}, userProfile: parsed.userProfile || { name:"", height:"", unit:"kg" } };
+                        if(!parsed.version || parsed.version < 8) {
+                             // Migration logic would go here, but for v8 clean start just ensure structure
+                             this.state = { ...this.state, ...parsed, version: 8 };
                         } else { 
                             this.state = { ...this.state, ...parsed }; 
                         }
@@ -599,16 +661,12 @@
                 const unitInput = document.getElementById('settings-unit'); if(unitInput) unitInput.value = this.state.userProfile.unit || "kg";
             }
             
-            saveData() { 
-                try {
-                    localStorage.setItem('medTrackerData', JSON.stringify(this.state)); 
-                    this.renderUI();
-                } catch(e) {
-                    console.error("Save failed", e);
-                    this.showToast("Error saving data");
-                }
+            saveSettings() { 
+                this.saveProfile();
+                this.toggleSettings();
+                this.showToast("Settings Saved");
             }
-            
+
             saveProfile() { 
                 this.state.userProfile.name = document.getElementById('settings-name').value; 
                 this.state.userProfile.height = document.getElementById('settings-height').value; 
@@ -665,8 +723,7 @@
             }
             
             renderDashboard() {
-                const container = document.getElementById('medication-cards-container'); 
-                const alertContainer = document.getElementById('missed-dose-alert-container'); 
+                const container = document.getElementById('medication-cards-container'); const alertContainer = document.getElementById('missed-dose-alert-container'); 
                 if(!container || !alertContainer) return;
 
                 container.innerHTML = ''; alertContainer.innerHTML = '';
